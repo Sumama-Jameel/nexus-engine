@@ -17,7 +17,7 @@ Only the latest release line receives security updates. We recommend always runn
 
 ### How to Report
 
-Send a detailed report to **[security@nexus-os.dev](mailto:security@nexus-os.dev)**.
+Send a detailed report to **[sumamajamil2005@gmail.com](mailto:sumamajamil2005@gmail.com)**.
 
 Please include:
 

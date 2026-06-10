@@ -8,7 +8,7 @@ This document provides guidelines for contributing to the Nexus Engine. Please r
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [Contributor Covenant v2.1 Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [community@nexus-os.dev](mailto:community@nexus-os.dev).
+This project and everyone participating in it is governed by the [Contributor Covenant v2.1 Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [sumamajamil2005@gmail.com](mailto:sumamajamil2005@gmail.com).
 
 ---
 
