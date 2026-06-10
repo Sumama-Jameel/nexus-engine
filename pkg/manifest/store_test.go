@@ -831,7 +831,7 @@ targets:
       - curl
 `
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                _ = fmt.Fprint(w, fetchYAML)
+			_, _ = fmt.Fprint(w, fetchYAML)
         }))
         defer cleanup()
 
@@ -910,7 +910,7 @@ func TestFetchProfile_HTTPError(t *testing.T) {
 
 func TestFetchProfile_InvalidContent(t *testing.T) {
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                _ = fmt.Fprint(w, "not: valid: yaml: [")
+			_, _ = fmt.Fprint(w, "not: valid: yaml: [")
         }))
         defer cleanup()
 
@@ -957,7 +957,7 @@ targets:
       - curl
 `
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                _ = fmt.Fprint(w, v2YAML)
+			_, _ = fmt.Fprint(w, v2YAML)
         }))
         defer cleanup()
 
@@ -1284,7 +1284,7 @@ func TestFetchProfile_ConnectionError(t *testing.T) {
 
         // Create a server and immediately close it to force a connection error
         ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                _ = fmt.Fprint(w, "should not reach")
+			_, _ = fmt.Fprint(w, "should not reach")
         }))
         u, _ := url.Parse(ts.URL)
         host := u.Hostname()
@@ -1359,7 +1359,7 @@ targets:
       - curl
 `
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                _ = fmt.Fprint(w, v2YAML)
+			_, _ = fmt.Fprint(w, v2YAML)
         }))
         defer cleanup()
 
@@ -1397,7 +1397,7 @@ targets:
 
         // Serve same version from test server (no drift)
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                _ = fmt.Fprint(w, v1YAML)
+			_, _ = fmt.Fprint(w, v1YAML)
         }))
         defer cleanup()
 
