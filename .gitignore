@@ -3,8 +3,8 @@
 # Committed binaries are distributed via GitHub Releases (GoReleaser), not source control.
 
 # Built binaries
-nexus
-nexus-*
+/nexus
+/nexus-*
 *.exe
 
 # GoReleaser output
