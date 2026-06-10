@@ -15,13 +15,12 @@
 package bridge
 
 import (
-        "context"
-        "fmt"
-        "strings"
-        "os/exec"
-        "sync"
+	"context"
+	"fmt"
+	"os/exec"
+	"strings"
 
-        "github.com/Sumama-Jameel/nexus-engine/internal/engine"
+	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 )
 
 // ExecFunc is the type signature for the centralized execution function.
@@ -40,8 +39,7 @@ type ExecFunc func(ctx context.Context, command string, args ...string) (string,
 // (for standalone operation) but SHOULD be overridden via SetExecFunc
 // to route through SanitizeAndExecute for Zero-Trust compliance.
 var (
-        bridgeExecFn ExecFunc
-        bridgeExecMu sync.Once
+	bridgeExecFn ExecFunc
 )
 
 func init() {
@@ -90,16 +88,6 @@ func SetExecFunc(fn ExecFunc) {
 // "Probe: Go queries the OS using runtime.GOOS and system calls
 //  to detect if it's running natively on Linux or inside WSL2."
 type EnvironmentInfo struct {
-        IsWSL2         bool            `json:"is_wsl2"`
-        IsNativeLinux  bool            `json:"is_native_linux"`
-        IsWindows      bool            `json:"is_windows"`
-        WindowsVersion string          `json:"windows_version,omitempty"`
-        WindowsBuild   int             `json:"windows_build,omitempty"`
-        Distro         string          `json:"distro"`
-        PackageManager string          `json:"package_manager"`
-        Prerequisites  map[string]bool `json:"prerequisites"`
-        Ready          bool            `json:"ready"`
-        Blockers       []string        `json:"blockers"`
         // WSL2Status contains the full WSL2 detection report when running
         // on Windows. On Linux, this field is nil — use IsWSL2 instead
         // to check if running inside WSL2.
@@ -109,6 +97,16 @@ type EnvironmentInfo struct {
         // environment detection flow, so `nexus probe` on Windows
         // shows WSL2 information without requiring a separate command.
         WSL2Status     *WSL2Status     `json:"wsl2_status,omitempty"`
+        Prerequisites  map[string]bool `json:"prerequisites"`
+        Blockers       []string        `json:"blockers"`
+        WindowsVersion string          `json:"windows_version,omitempty"`
+        Distro         string          `json:"distro"`
+        PackageManager string          `json:"package_manager"`
+        WindowsBuild   int             `json:"windows_build,omitempty"`
+        IsWSL2         bool            `json:"is_wsl2"`
+        IsNativeLinux  bool            `json:"is_native_linux"`
+        IsWindows      bool            `json:"is_windows"`
+        Ready          bool            `json:"ready"`
 }
 
 // DetectEnvironment probes the current OS environment and determines

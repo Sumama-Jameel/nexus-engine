@@ -15,21 +15,21 @@
 package main
 
 import (
-        "bufio"
-        "context"
-        "encoding/json"
-        "fmt"
-        "os"
-        "strings"
+	"bufio"
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
 
-        "github.com/Sumama-Jameel/nexus-engine/cmd/nexus/runner"
-        "github.com/Sumama-Jameel/nexus-engine/internal/bridge"
-        "github.com/Sumama-Jameel/nexus-engine/internal/engine"
-        "github.com/Sumama-Jameel/nexus-engine/internal/installer"
-        "github.com/Sumama-Jameel/nexus-engine/internal/wsl"
-        "github.com/Sumama-Jameel/nexus-engine/pkg/manifest"
-        "github.com/spf13/cobra"
-        "github.com/spf13/viper"
+	"github.com/Sumama-Jameel/nexus-engine/cmd/nexus/runner"
+	"github.com/Sumama-Jameel/nexus-engine/internal/bridge"
+	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
+	"github.com/Sumama-Jameel/nexus-engine/internal/installer"
+	"github.com/Sumama-Jameel/nexus-engine/internal/wsl"
+	"github.com/Sumama-Jameel/nexus-engine/pkg/manifest"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -85,7 +85,7 @@ and automates a perfect developer environment.
                 Short: "Print the Nexus Engine version",
                 Run: func(cmd *cobra.Command, args []string) {
                         if outputJSON {
-                                jsonOutput(map[string]string{"version": nexusVersion, "engine": "go"})
+                                _ = jsonOutput(map[string]string{"version": nexusVersion, "engine": "go"})
                         } else {
                                 fmt.Printf("Nexus Engine v%s (Go)\n", nexusVersion)
                         }
@@ -98,7 +98,7 @@ and automates a perfect developer environment.
                 Short: "Get a configuration value",
                 Args:  cobra.ExactArgs(1),
                 Run: func(cmd *cobra.Command, args []string) {
-                        engine.InitConfig()
+                        _ = engine.InitConfig()
                         fmt.Println(viper.Get(args[0]))
                 },
         }
@@ -510,7 +510,7 @@ func runInit(cmd *cobra.Command, args []string) error {
                                 fmt.Fprintf(os.Stderr, "  ⛔ Installer init failed: %v\n", depsErr)
                         }
                 } else {
-                        defer deps.audit.Close()
+                        defer func() { _ = deps.audit.Close() }()
 
                         target := manifest.ResolveTarget(profile, env.PackageManager)
                         if target != nil {
@@ -531,7 +531,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 
                                 // Record profile as applied
                                 if store != nil && !dryRun {
-                                        store.RecordApplied(profileName)
+                                        _ = store.RecordApplied(profileName)
                                 }
                         }
                 }
@@ -617,7 +617,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
         if err != nil {
                 return err
         }
-        defer rdeps.Audit.Close()
+        defer func() { _ = rdeps.Audit.Close() }()
 
         // Handle file-path profile fallback (not supported by runner — CLI-only)
         profileName := profilePath
@@ -704,7 +704,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
         if err != nil {
                 return err
         }
-        defer rdeps.Audit.Close()
+        defer func() { _ = rdeps.Audit.Close() }()
 
         if !outputJSON {
                 fmt.Println()
@@ -800,7 +800,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
         if err != nil {
                 return err
         }
-        defer rdeps.Audit.Close()
+        defer func() { _ = rdeps.Audit.Close() }()
 
         results, err := rdeps.SearchPackages(ctx, args[0])
         if err != nil {
@@ -837,7 +837,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
         if err != nil {
                 return err
         }
-        defer rdeps.Audit.Close()
+        defer func() { _ = rdeps.Audit.Close() }()
 
         var packages []string
         if len(args) > 0 {
@@ -1014,7 +1014,7 @@ func runProfileValidate(cmd *cobra.Command, args []string) error {
                 return err
         }
 
-        data, readErr := os.ReadFile(filePath)
+        data, readErr := os.ReadFile(filePath) //nolint:gosec
         if readErr != nil {
                 fmt.Fprintf(os.Stderr, "  ⛔ Failed to read file: %v\n", readErr)
                 os.Exit(1)
@@ -1023,7 +1023,7 @@ func runProfileValidate(cmd *cobra.Command, args []string) error {
         profile, validateErr := rdeps.ValidateProfileBytes(data)
         if validateErr != nil {
                 if outputJSON {
-                        jsonOutput(map[string]interface{}{"valid": false, "error": validateErr.Error()})
+                        _ = jsonOutput(map[string]interface{}{"valid": false, "error": validateErr.Error()})
                 } else {
                         fmt.Fprintf(os.Stderr, "  ⛔ INVALID: %v\n", validateErr)
                 }
@@ -1186,7 +1186,7 @@ func runProfileFetch(cmd *cobra.Command, args []string) error {
 
         if err := store.FetchProfile(name, remoteBase); err != nil {
                 if outputJSON {
-                        jsonOutput(map[string]interface{}{"success": false, "error": err.Error()})
+                        _ = jsonOutput(map[string]interface{}{"success": false, "error": err.Error()})
                 } else {
                         fmt.Fprintf(os.Stderr, "  ⛔ Fetch failed: %v\n", err)
                 }
@@ -1218,7 +1218,7 @@ func runProfileRemove(cmd *cobra.Command, args []string) error {
 
         if err := store.RemoveProfile(name, forceRemove); err != nil {
                 if outputJSON {
-                        jsonOutput(map[string]interface{}{"success": false, "error": err.Error()})
+                        _ = jsonOutput(map[string]interface{}{"success": false, "error": err.Error()})
                 } else {
                         fmt.Fprintf(os.Stderr, "  ⛔ %v\n", err)
                 }
@@ -1247,7 +1247,7 @@ func runProfileVerify(cmd *cobra.Command, args []string) error {
         err = store.VerifyIntegrity(name)
         if err != nil {
                 if outputJSON {
-                        jsonOutput(map[string]interface{}{"valid": false, "error": err.Error()})
+                        _ = jsonOutput(map[string]interface{}{"valid": false, "error": err.Error()})
                 } else {
                         fmt.Fprintf(os.Stderr, "  ⛔ INTEGRITY CHECK FAILED: %v\n", err)
                 }
@@ -1274,7 +1274,7 @@ func runProfileApply(cmd *cobra.Command, args []string) error {
         if err != nil {
                 return err
         }
-        defer rdeps.Audit.Close()
+        defer func() { _ = rdeps.Audit.Close() }()
         rdeps.DryRun = dryRun
 
         if !outputJSON {
@@ -1466,9 +1466,9 @@ func runWSLImport(cmd *cobra.Command, args []string) error {
                         if err != nil {
                                 entry.Error = err.Error()
                         }
-                        audit.Log(entry)
+                        _ = audit.Log(entry)
                 })
-                defer audit.Close()
+                defer func() { _ = audit.Close() }()
         }
 
         // Build import config
@@ -1592,9 +1592,9 @@ func runWSLSetup(cmd *cobra.Command, args []string) error {
                         if err != nil {
                                 entry.Error = err.Error()
                         }
-                        audit.Log(entry)
+                        _ = audit.Log(entry)
                 })
-                defer audit.Close()
+                defer func() { _ = audit.Close() }()
         }
 
         importCfg := &wsl.ImportConfig{
@@ -1678,9 +1678,9 @@ func runWSLRemove(cmd *cobra.Command, args []string) error {
                         if err != nil {
                                 entry.Error = err.Error()
                         }
-                        audit.Log(entry)
+                        _ = audit.Log(entry)
                 })
-                defer audit.Close()
+                defer func() { _ = audit.Close() }()
         }
 
         if err := wslImporter.Remove(ctx, distroName, forceRemove); err != nil {
@@ -1693,7 +1693,7 @@ func runWSLRemove(cmd *cobra.Command, args []string) error {
         }
 
         if state != nil {
-                state.RecordWSLRemove(distroName)
+                _ = state.RecordWSLRemove(distroName)
         }
 
         if outputJSON {

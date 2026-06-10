@@ -21,6 +21,14 @@ import (
 
 // PreFlightResult captures the outcome of all pre-installation checks.
 type PreFlightResult struct {
+        // Skipped lists packages that are already installed and will not be
+        // reinstalled (idempotency).
+        Skipped    []string `json:"skipped_already_installed"`
+        // ToInstall lists packages that are not yet present and require installation.
+        ToInstall  []string `json:"to_install"`
+        // Warnings contains human-readable messages for any checks that failed
+        // or produced advisories.
+        Warnings   []string `json:"warnings"`
         // CanProceed indicates whether the installation may proceed. When false,
         // at least one critical check (disk, sudo, or lock) has failed.
         CanProceed bool     `json:"can_proceed"`
@@ -35,14 +43,6 @@ type PreFlightResult struct {
         // LockOK indicates whether the package manager's lock file is not held
         // by another process.
         LockOK     bool     `json:"lock_ok"`
-        // Skipped lists packages that are already installed and will not be
-        // reinstalled (idempotency).
-        Skipped    []string `json:"skipped_already_installed"`
-        // ToInstall lists packages that are not yet present and require installation.
-        ToInstall  []string `json:"to_install"`
-        // Warnings contains human-readable messages for any checks that failed
-        // or produced advisories.
-        Warnings   []string `json:"warnings"`
 }
 
 // PreFlightCheck validates the environment BEFORE any installation begins.

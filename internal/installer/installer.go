@@ -30,22 +30,22 @@ type PackageResult struct {
         Package    string        `json:"package"`
         // Action is the operation performed: "install", "remove", or "update".
         Action     string        `json:"action"`
+        // Error contains a human-readable or classified error message when
+        // Success is false. Empty when the operation succeeded.
+        Error      string        `json:"error,omitempty"`
+        // SkipReason explains why the operation was skipped, e.g.,
+        // "already installed".
+        SkipReason string        `json:"skip_reason,omitempty"`
+        // Duration is the wall-clock time taken for the package operation.
+        Duration   time.Duration `json:"duration_ms"`
         // Success indicates whether the package operation completed without error.
         Success    bool          `json:"success"`
         // Verified indicates whether post-install verification confirmed the
         // package is functional. Only set after the Verify step; false until then.
         Verified   bool          `json:"verified"`
-        // Error contains a human-readable or classified error message when
-        // Success is false. Empty when the operation succeeded.
-        Error      string        `json:"error,omitempty"`
-        // Duration is the wall-clock time taken for the package operation.
-        Duration   time.Duration `json:"duration_ms"`
         // Skipped indicates the operation was skipped because the package was
         // already in the desired state (e.g., already installed).
         Skipped    bool          `json:"skipped"`
-        // SkipReason explains why the operation was skipped, e.g.,
-        // "already installed".
-        SkipReason string        `json:"skip_reason,omitempty"`
 }
 
 // PackageManager is the contract every package manager must implement.

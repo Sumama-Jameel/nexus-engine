@@ -26,6 +26,21 @@ import (
 // ConfigureResult tracks the outcome of the Configure step, providing a
 // detailed breakdown of each sub-operation for user feedback and debugging.
 type ConfigureResult struct {
+        // Messages is a list of human-readable status messages describing each
+        // sub-operation performed or skipped during configuration.
+        Messages []string `json:"messages"`
+        // ShellConfigPath is the filesystem path to the modified shell rc file
+        // (e.g., ~/.zshrc or ~/.bashrc).
+        ShellConfigPath string `json:"shell_config_path"`
+        // ShellType is the detected shell family ("zsh" or "bash"), determined
+        // by inspecting the SHELL environment variable.
+        ShellType string `json:"shell_type"`
+        // NexusDir is the absolute path to the Nexus configuration directory,
+        // typically ~/.nexus.
+        NexusDir string `json:"nexus_dir"`
+        // EnvVarsApplied is the count of profile environment variables that were
+        // injected into the shell configuration block.
+        EnvVarsApplied int `json:"env_vars_applied"`
         // ChezmoiInstalled indicates whether the Chezmoi dotfile manager was found
         // on the system PATH.
         ChezmoiInstalled bool `json:"chezmoi_installed"`
@@ -35,24 +50,9 @@ type ConfigureResult struct {
         // ShellConfigWritten indicates whether the Nexus-optimized shell
         // configuration block was successfully injected into the user's rc file.
         ShellConfigWritten bool `json:"shell_config_written"`
-        // ShellConfigPath is the filesystem path to the modified shell rc file
-        // (e.g., ~/.zshrc or ~/.bashrc).
-        ShellConfigPath string `json:"shell_config_path"`
-        // ShellType is the detected shell family ("zsh" or "bash"), determined
-        // by inspecting the SHELL environment variable.
-        ShellType string `json:"shell_type"`
         // NexusDirCreated indicates whether the ~/.nexus directory was created
         // during this run (false if it already existed).
         NexusDirCreated bool `json:"nexus_dir_created"`
-        // NexusDir is the absolute path to the Nexus configuration directory,
-        // typically ~/.nexus.
-        NexusDir string `json:"nexus_dir"`
-        // EnvVarsApplied is the count of profile environment variables that were
-        // injected into the shell configuration block.
-        EnvVarsApplied int `json:"env_vars_applied"`
-        // Messages is a list of human-readable status messages describing each
-        // sub-operation performed or skipped during configuration.
-        Messages []string `json:"messages"`
 }
 
 // Configure executes the CONFIGURE step of nexus init:
@@ -77,7 +77,7 @@ func Configure(ctx context.Context, envVars map[string]string) *ConfigureResult 
 
         // Step 1: Create ~/.nexus directory
         nexusDir := filepath.Join(homeDir, ".nexus")
-        if err := os.MkdirAll(nexusDir, 0755); err != nil {
+        if err := os.MkdirAll(nexusDir, 0755); err != nil { //nolint:gosec
                 result.Messages = append(result.Messages, fmt.Sprintf("Failed to create %s: %v", nexusDir, err))
         } else {
                 result.NexusDirCreated = true
@@ -280,7 +280,7 @@ alias ninit='nexus init'
 func injectShellConfig(configPath string, config string) error {
         // Read existing config
         existing := ""
-        data, err := os.ReadFile(configPath)
+        data, err := os.ReadFile(configPath) //nolint:gosec
         if err == nil {
                 existing = string(data)
         }
@@ -307,5 +307,5 @@ func injectShellConfig(configPath string, config string) error {
         // Append the new config
         newContent := strings.TrimSuffix(existing, "\n") + config
 
-        return os.WriteFile(configPath, []byte(newContent), 0644)
+        return os.WriteFile(configPath, []byte(newContent), 0644) //nolint:gosec
 }

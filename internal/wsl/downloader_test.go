@@ -159,8 +159,8 @@ func TestValidateDownloadURL(t *testing.T) {
 	tests := []struct {
 		name    string
 		url     string
-		wantErr bool
 		errMsg  string
+		wantErr bool
 	}{
 		// Valid HTTPS URLs
 		{

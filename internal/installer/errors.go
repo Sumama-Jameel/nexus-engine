@@ -20,10 +20,10 @@ import "fmt"
 // It provides a machine-readable Code, a human-readable Message,
 // the Stage where the error occurred, and the underlying Cause.
 type NexusError struct {
+	Cause   error  // Underlying error
 	Code    string // Machine-readable: PREFLIGHT_FAIL, FOUNDATION_FAIL, VERIFY_FAIL, ROLLBACK_FAIL, INSTALL_FAIL
 	Message string // Human-readable description
 	Stage   string // PreFlight, Install, Verify, Rollback
-	Cause   error  // Underlying error
 }
 
 func (e *NexusError) Error() string {

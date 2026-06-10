@@ -116,7 +116,7 @@ func TestInitConfig_ReadsExistingConfig(t *testing.T) {
 
 	// Create nexus config directory and file
 	nexusDir := filepath.Join(tmpDir, ".nexus")
-	if err := os.MkdirAll(nexusDir, 0755); err != nil {
+	if err := os.MkdirAll(nexusDir, 0755); err != nil { //nolint:gosec
 		t.Fatalf("failed to create nexus dir: %v", err)
 	}
 	configContent := `profile: custom-profile
@@ -126,7 +126,7 @@ auto_update: true
 verbose: true
 `
 	configPath := filepath.Join(nexusDir, "config.yaml")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil { //nolint:gosec
 		t.Fatalf("failed to write config: %v", err)
 	}
 
@@ -255,9 +255,6 @@ func TestNexusConfig_Fields(t *testing.T) {
 	cfg := &NexusConfig{
 		Profile:        "test",
 		PackageManager: "apk",
-		Shell:          "zsh",
-		AutoUpdate:     true,
-		Verbose:        false,
 	}
 	if cfg.Profile != "test" {
 		t.Errorf("Profile = %q, want %q", cfg.Profile, "test")

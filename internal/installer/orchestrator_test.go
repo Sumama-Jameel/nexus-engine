@@ -38,12 +38,12 @@ import (
 // ---------------------------------------------------------------------------
 
 type mockPackageManager struct {
-        mu         sync.Mutex
-        name       string
         installed  map[string]bool  // packages reported as installed by IsInstalled
         installErr map[string]error // packages that fail on Install (causes Install to return error)
         removeErr  map[string]error // packages that fail on Remove
         refreshErr error            // error returned by RefreshIndex
+        name       string
+        mu         sync.Mutex
 }
 
 func newMockPackageManager(name string) *mockPackageManager {
@@ -168,7 +168,7 @@ func newTestAuditLogger(t *testing.T) *engine.AuditLogger {
         if err != nil {
                 t.Fatalf("failed to create AuditLogger: %v", err)
         }
-        t.Cleanup(func() { al.Close() })
+        t.Cleanup(func() { _ = al.Close() })
         return al
 }
 
@@ -413,9 +413,9 @@ func TestOrchestrator_groupByPriority(t *testing.T) {
         t.Parallel()
 
         tests := []struct {
-                name       string
                 packages   []string
                 wantGroups map[int][]string
+                name       string
         }{
                 {
                         name:     "mixed_priorities",
@@ -659,9 +659,7 @@ func TestRollbackReport(t *testing.T) {
 func TestRollbackReport_Empty(t *testing.T) {
         t.Parallel()
 
-        report := &RollbackReport{
-                Reason: "no packages to roll back",
-        }
+		report := &RollbackReport{}
 
         if len(report.Removed) != 0 {
                 t.Errorf("Removed count = %d, want 0", len(report.Removed))
@@ -675,8 +673,8 @@ func TestBoolToResult(t *testing.T) {
         t.Parallel()
 
         tests := []struct {
-                input    bool
                 expected string
+                input    bool
         }{
                 {true, "success"},
                 {false, "failure"},

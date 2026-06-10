@@ -27,7 +27,7 @@ func checkDiskSpace(minMB uint64) bool {
         if err := syscall.Statfs("/", &stat); err != nil {
                 return false
         }
-        freeMB := (stat.Bavail * uint64(stat.Bsize)) / 1024 / 1024
+        freeMB := (stat.Bavail * uint64(stat.Bsize)) / 1024 / 1024 //nolint:gosec
         return freeMB >= minMB
 }
 

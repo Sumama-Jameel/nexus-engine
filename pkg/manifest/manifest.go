@@ -43,13 +43,13 @@ var schemaFS embed.FS
 // inherit and augment the packages of a parent profile. Resolution is
 // performed by ResolveExtends with cycle detection and depth limiting.
 type NexusProfile struct {
+        Targets     []TargetConfig    `yaml:"targets"`
+        Env         map[string]string `yaml:"env"`
         Name        string            `yaml:"name"`
         Version     string            `yaml:"version"`
         Description string            `yaml:"description"`
         Author      string            `yaml:"author"`
         Extends     string            `yaml:"extends,omitempty"`
-        Targets     []TargetConfig    `yaml:"targets"`
-        Env         map[string]string `yaml:"env"`
 }
 
 // TargetConfig defines a set of packages for a specific OS family.

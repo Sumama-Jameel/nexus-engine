@@ -15,9 +15,10 @@
 package wsl
 
 import (
-        "fmt"
-        "strings"
-        "testing"
+	"context"
+	"fmt"
+	"strings"
+	"testing"
 )
 
 // ---------------------------------------------------------------------------
@@ -108,7 +109,7 @@ func TestWSL2Importer_Import_Linux(t *testing.T) {
                 DistroName: "test",
                 Image:      &RootFSImage{Name: "test", Version: "1.0.0"},
         }
-        result, err := importer.Import(nil, config)
+        result, err := importer.Import(context.Background(), config)
         if err == nil {
                 t.Error("expected error on Linux")
         }
@@ -122,7 +123,7 @@ func TestWSL2Importer_Import_Linux(t *testing.T) {
 
 func TestWSL2Importer_Remove_Linux(t *testing.T) {
         importer := NewWSL2Importer(nil)
-        err := importer.Remove(nil, "test", false)
+        err := importer.Remove(context.Background(), "test", false)
         if err == nil {
                 t.Error("expected error on Linux")
         }
@@ -130,7 +131,7 @@ func TestWSL2Importer_Remove_Linux(t *testing.T) {
 
 func TestWSL2Importer_ListNexusDistros_Linux(t *testing.T) {
         importer := NewWSL2Importer(nil)
-        _, err := importer.ListNexusDistros(nil)
+        _, err := importer.ListNexusDistros(context.Background())
         if err == nil {
                 t.Error("expected error on Linux")
         }
@@ -389,11 +390,10 @@ func TestRootFSImage_Fields(t *testing.T) {
                         Version:     "1.0.0",
                         URL:         "https://example.com/test.tar.gz",
                         SHA256:      "abc123",
+				Arch:        "amd64",
+				Family:      "alpine",
+				DefaultUser: "nexus",
                         Size:        3145728,
-                        Arch:        "amd64",
-                        Family:      "alpine",
-                        Description: "Test image",
-                        DefaultUser: "nexus",
                 }
 
                 if img.Name != "test-image" {

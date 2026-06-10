@@ -756,7 +756,7 @@ func TestCheckLock_LockFileHeldByAnotherProcess(t *testing.T) {
         }
 
         // Create the lock file
-        f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDONLY, 0644)
+        f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDONLY, 0644) //nolint:gosec
         if err != nil {
                 t.Skipf("cannot create lock file: %v", err)
         }
@@ -839,7 +839,7 @@ func TestCheckLock_LockFileCanBeOpenedAndFlocked(t *testing.T) {
         }
 
         // Create a readable lock file
-        f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDONLY, 0644)
+        f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDONLY, 0644) //nolint:gosec
         if err != nil {
                 t.Skipf("cannot create lock file: %v", err)
         }
@@ -1354,7 +1354,7 @@ func TestCheckLockFiles_ExistingFileNoLock(t *testing.T) {
         lockPath := filepath.Join(tmpDir, "test.lck")
 
         // Create the lock file
-        f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDONLY, 0644)
+        f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDONLY, 0644) //nolint:gosec
         if err != nil {
                 t.Fatalf("failed to create lock file: %v", err)
         }

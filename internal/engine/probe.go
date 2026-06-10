@@ -41,6 +41,12 @@ type SystemInfo struct {
         Hostname string `json:"hostname"`
         // CPUModel is the processor model name, read from /proc/cpuinfo on Linux.
         CPUModel string `json:"cpu_model"`
+        // GPU is the GPU model name detected via lspci, or "N/A" if unavailable.
+        GPU string `json:"gpu"`
+        // NetworkIP is the primary network IP address from hostname -I.
+        NetworkIP string `json:"network_ip"`
+        // Uptime is the system uptime as a human-readable duration string.
+        Uptime string `json:"uptime"`
         // CPUCores is the number of logical CPU cores available.
         CPUCores int `json:"cpu_cores"`
         // RAMTotalMB is the total installed RAM in megabytes.
@@ -51,15 +57,9 @@ type SystemInfo struct {
         DiskTotalGB float64 `json:"disk_total_gb"`
         // DiskUsedGB is the used disk space on the root partition in gigabytes.
         DiskUsedGB float64 `json:"disk_used_gb"`
-        // GPU is the GPU model name detected via lspci, or "N/A" if unavailable.
-        GPU string `json:"gpu"`
         // IsWSL2 indicates whether the system is running inside Windows Subsystem
         // for Linux version 2, detected by checking /proc/version for Microsoft markers.
         IsWSL2 bool `json:"is_wsl2"`
-        // NetworkIP is the primary network IP address from hostname -I.
-        NetworkIP string `json:"network_ip"`
-        // Uptime is the system uptime as a human-readable duration string.
-        Uptime string `json:"uptime"`
         // ProbedAt is the UTC timestamp when the probe was executed.
         ProbedAt time.Time `json:"probed_at"`
 }

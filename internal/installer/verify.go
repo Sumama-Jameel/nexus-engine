@@ -24,13 +24,13 @@ import (
 type VerifyResult struct {
         // Package is the name of the package that was verified.
         Package  string `json:"package"`
-        // Verified indicates whether the package passed both the package-manager
-        // installation check and the binary-level functional test.
-        Verified bool   `json:"verified"`
         // Status classifies the verification outcome. One of "verified",
         // "not_found" (package manager does not report it installed), or
         // "broken" (installed but binary check failed).
         Status   string `json:"status"`
+        // Verified indicates whether the package passed both the package-manager
+        // installation check and the binary-level functional test.
+        Verified bool   `json:"verified"`
 }
 
 // VerifyInstallation confirms each package is actually functional after install.

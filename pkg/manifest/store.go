@@ -56,12 +56,12 @@ const (
 // added and last applied. The SHA256 field is used by VerifyIntegrity to
 // detect unauthorized modifications on every profile load.
 type ProfileMeta struct {
+        LastApplied *time.Time    `json:"last_applied,omitempty"`
+        DateAdded   time.Time     `json:"date_added"`
         Name        string        `json:"name"`
         Version     string        `json:"version"`
-        Source      ProfileSource `json:"source"`
         SHA256      string        `json:"sha256"`
-        DateAdded   time.Time     `json:"date_added"`
-        LastApplied *time.Time    `json:"last_applied,omitempty"`
+        Source      ProfileSource `json:"source"`
 }
 
 // ProfileRegistry is the on-disk index file (registry.json) for the local
@@ -70,8 +70,8 @@ type ProfileMeta struct {
 // The registry is persisted atomically (temp file + rename) to prevent
 // corruption from partial writes.
 type ProfileRegistry struct {
-        Version  int                    `json:"version"`
         Profiles map[string]ProfileMeta `json:"profiles"`
+        Version  int                    `json:"version"`
 }
 
 // ProfileStore manages the local profile directory at ~/.nexus/profiles/.

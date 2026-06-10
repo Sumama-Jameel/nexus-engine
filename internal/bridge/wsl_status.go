@@ -15,8 +15,8 @@
 package bridge
 
 import (
-        "fmt"
-        "strings"
+	"fmt"
+	"strings"
 )
 
 // WSL2Status captures the full WSL2 detection intelligence report.
@@ -32,18 +32,18 @@ import (
 //
 // This struct is JSON-serializable for IPC (future Tauri HUD in V10).
 type WSL2Status struct {
-        WSLAvailable    bool       `json:"wsl_available"`     // Is WSL feature enabled at all?
-        WSLVersion      string     `json:"wsl_version"`       // "1", "2", or "unknown"
-        DefaultDistro   string     `json:"default_distro"`    // Default WSL distribution name
         Distros         []WSLDistro `json:"distros"`           // All installed distributions
-        KernelVersion   string     `json:"kernel_version"`    // WSL2 kernel version (e.g., "5.15.133.1")
-        HyperVAvailable bool       `json:"hyperv_available"`  // Is Hyper-V present? (required for WSL2)
-        WindowsVersion  string     `json:"windows_version"`   // "Windows 10 22H2" or "Windows 11"
-        WindowsBuild    int        `json:"windows_build"`     // Build number (19041+ = WSL2 capable)
-        Architecture    string     `json:"architecture"`      // "amd64" or "arm64"
-        Ready           bool       `json:"ready"`             // Can Nexus be installed right now?
         Blockers        []string   `json:"blockers"`          // Specific issues preventing install
         Recommendations []string   `json:"recommendations"`   // What the user should do next
+        WSLVersion      string     `json:"wsl_version"`       // "1", "2", or "unknown"
+        DefaultDistro   string     `json:"default_distro"`    // Default WSL distribution name
+        KernelVersion   string     `json:"kernel_version"`    // WSL2 kernel version (e.g., "5.15.133.1")
+        WindowsVersion  string     `json:"windows_version"`   // "Windows 10 22H2" or "Windows 11"
+        Architecture    string     `json:"architecture"`      // "amd64" or "arm64"
+        WindowsBuild    int        `json:"windows_build"`     // Build number (19041+ = WSL2 capable)
+        WSLAvailable    bool       `json:"wsl_available"`     // Is WSL feature enabled at all?
+        HyperVAvailable bool       `json:"hyperv_available"`  // Is Hyper-V present? (required for WSL2)
+        Ready           bool       `json:"ready"`             // Can Nexus be installed right now?
 }
 
 // WSLDistro represents a single installed WSL distribution, as reported by

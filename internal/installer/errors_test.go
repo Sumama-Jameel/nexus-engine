@@ -396,8 +396,8 @@ func TestConstructors_TableDriven_NilCause(t *testing.T) {
 
 func TestNexusError_ErrorsAs(t *testing.T) {
 	tests := []struct {
-		name    string
-		err     *NexusError
+		err  *NexusError
+		name string
 	}{
 		{
 			name: "PreflightError as NexusError",
@@ -441,8 +441,8 @@ func TestNexusError_ErrorsIs_WithWrappedCause(t *testing.T) {
 	baseErr := errors.New("base failure")
 
 	tests := []struct {
-		name string
 		err  *NexusError
+		name string
 	}{
 		{
 			name: "PreflightError wraps base",

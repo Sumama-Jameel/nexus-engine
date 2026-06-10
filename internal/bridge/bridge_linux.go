@@ -17,10 +17,10 @@
 package bridge
 
 import (
-        "context"
-        "os"
-        "runtime"
-        "strings"
+	"context"
+	"os"
+	"runtime"
+	"strings"
 )
 
 // detectEnvironmentImpl probes the Linux environment.

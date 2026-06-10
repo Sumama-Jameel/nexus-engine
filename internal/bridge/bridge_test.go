@@ -15,9 +15,9 @@
 package bridge
 
 import (
-        "context"
-        "strings"
-        "testing"
+	"context"
+	"strings"
+	"testing"
 )
 
 // ---------------------------------------------------------------------------
@@ -40,9 +40,9 @@ func TestDetectEnvironment(t *testing.T) {
                 if env.WSL2Status != nil {
                         t.Error("WSL2Status should be nil on Linux (Spy only runs on Windows)")
                 }
-                // Blockers should be initialised (never nil)
+                // Blockers should be initialized (never nil)
                 if env.Blockers == nil {
-                        t.Error("Blockers should be initialised, not nil")
+                        t.Error("Blockers should be initialized, not nil")
                 }
         })
 
@@ -490,10 +490,8 @@ func TestWSLDistro(t *testing.T) {
 func TestEnvironmentInfo_JSON(t *testing.T) {
         t.Run("WSL2 status serializes correctly", func(t *testing.T) {
                 env := &EnvironmentInfo{
-                        IsWSL2:        true,
-                        IsNativeLinux: false,
-                        Distro:        "Ubuntu",
-                        WSL2Status: &WSL2Status{
+			IsWSL2: true,
+			WSL2Status: &WSL2Status{
                                 WSLAvailable:    true,
                                 WSLVersion:      "2",
                                 HyperVAvailable: true,

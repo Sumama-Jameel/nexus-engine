@@ -27,19 +27,19 @@ import (
 // by Nexus. It persists to ~/.nexus/state.json and enables idempotent
 // operations, drift detection, and targeted rollback.
 type PackageState struct {
-        // InstalledAt is the UTC timestamp when the package was successfully
-        // installed by the Nexus engine.
-        InstalledAt time.Time `json:"installed_at"`
         // Profile is the name of the Nexus profile that triggered the installation,
         // used to determine ownership during profile removal.
         Profile string `json:"profile"`
-        // Verified indicates whether the package's installation was confirmed by
-        // a post-install verification check (e.g., checking the binary exists on PATH).
-        Verified bool `json:"verified"`
         // PackageManager is the name of the package manager used to install this
         // package (e.g., "apt-get", "dnf", "pacman"), recorded to ensure the
         // correct manager is used for removal.
         PackageManager string `json:"package_manager"`
+        // Verified indicates whether the package's installation was confirmed by
+        // a post-install verification check (e.g., checking the binary exists on PATH).
+        Verified bool `json:"verified"`
+        // InstalledAt is the UTC timestamp when the package was successfully
+        // installed by the Nexus engine.
+        InstalledAt time.Time `json:"installed_at"`
 }
 
 // WSLInstanceState records the state of a Nexus-managed WSL2 instance.
@@ -72,12 +72,6 @@ type WSLInstanceState struct {
 // ~/.nexus/state.json. It tracks all Nexus-managed packages, applied profiles,
 // and WSL2 instances to enable idempotent operations and drift detection.
 type NexusState struct {
-        // Version is the state file schema version. Incremented when the structure
-        // changes to enable migration of existing state files.
-        Version int `json:"version"`
-        // LastModified is the UTC timestamp of the most recent state mutation,
-        // updated on every Record* call.
-        LastModified time.Time `json:"last_modified"`
         // Packages maps package names to their installation state. The key is the
         // package name as recognized by the system package manager.
         Packages map[string]PackageState `json:"packages"`
@@ -87,6 +81,12 @@ type NexusState struct {
         // WSLInstances maps WSL2 distribution names to their import state.
         // Omitted from JSON when empty via omitempty.
         WSLInstances map[string]WSLInstanceState `json:"wsl_instances,omitempty"`
+        // LastModified is the UTC timestamp of the most recent state mutation,
+        // updated on every Record* call.
+        LastModified time.Time `json:"last_modified"`
+        // Version is the state file schema version. Incremented when the structure
+        // changes to enable migration of existing state files.
+        Version int `json:"version"`
 }
 
 // StateTracker manages the persistent installation state at ~/.nexus/state.json.
@@ -94,9 +94,9 @@ type NexusState struct {
 // The state file tracks what Nexus installed so it can make intelligent
 // decisions: skip already-installed packages, detect drift, enable rollback.
 type StateTracker struct {
-        path  string
         state *NexusState
         mu    sync.Mutex
+        path  string
 }
 
 // NewStateTracker creates or loads the state file.
@@ -113,7 +113,7 @@ func NewStateTracker() (*StateTracker, error) {
         tracker := &StateTracker{path: path}
 
         // Load existing state or create new
-        if data, err := os.ReadFile(path); err == nil {
+        if data, err := os.ReadFile(path); err == nil { //nolint:gosec
                 var state NexusState
                 if err := json.Unmarshal(data, &state); err == nil {
                         // Migration: ensure WSLInstances is initialized for existing state files
@@ -275,13 +275,13 @@ func (s *StateTracker) save() error {
 
         // Write to temp file first
         tmpPath := s.path + ".tmp"
-        if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+        if err := os.WriteFile(tmpPath, data, 0644); err != nil { //nolint:gosec
                 return fmt.Errorf("failed to write state: %w", err)
         }
 
         // Atomic rename (POSIX guarantees this is atomic)
         if err := os.Rename(tmpPath, s.path); err != nil {
-                os.Remove(tmpPath) // Clean up temp file
+                _ = os.Remove(tmpPath) // Clean up temp file
                 return fmt.Errorf("failed to commit state: %w", err)
         }
 

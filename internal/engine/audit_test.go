@@ -32,7 +32,7 @@ func newAuditLoggerForTest(t *testing.T) *AuditLogger {
         tmpDir := t.TempDir()
         path := filepath.Join(tmpDir, "audit.log")
 
-        file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+        file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644) //nolint:gosec
         if err != nil {
                 t.Fatalf("failed to open audit log: %v", err)
         }
@@ -47,14 +47,14 @@ func newAuditLoggerForTest(t *testing.T) *AuditLogger {
 func TestNewAuditLogger(t *testing.T) {
         tmpDir := t.TempDir()
         origHome := os.Getenv("HOME")
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         logger, err := NewAuditLogger()
         if err != nil {
                 t.Fatalf("NewAuditLogger failed: %v", err)
         }
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         if logger == nil {
                 t.Fatal("NewAuditLogger returned nil")
@@ -67,14 +67,14 @@ func TestNewAuditLogger(t *testing.T) {
 func TestNewAuditLogger_CreatesDirectory(t *testing.T) {
         tmpDir := t.TempDir()
         origHome := os.Getenv("HOME")
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         logger, err := NewAuditLogger()
         if err != nil {
                 t.Fatalf("NewAuditLogger failed: %v", err)
         }
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
         info, err := os.Stat(nexusDir)
@@ -89,24 +89,24 @@ func TestNewAuditLogger_CreatesDirectory(t *testing.T) {
 func TestNewAuditLogger_OpensExistingFile(t *testing.T) {
         tmpDir := t.TempDir()
         origHome := os.Getenv("HOME")
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755)
 
         // Pre-create the audit log with some content
         existing := filepath.Join(nexusDir, "audit.log")
-        os.WriteFile(existing, []byte("{\"test\":true}\n"), 0644)
+        _ = os.WriteFile(existing, []byte("{\"test\":true}\n"), 0644)
 
         logger, err := NewAuditLogger()
         if err != nil {
                 t.Fatalf("NewAuditLogger with existing file failed: %v", err)
         }
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         // The existing content should still be there
-        data, _ := os.ReadFile(existing)
+        data, _ := os.ReadFile(existing) //nolint:gosec
         if !strings.Contains(string(data), "test") {
                 t.Error("existing audit log content should be preserved")
         }
@@ -118,7 +118,7 @@ func TestNewAuditLogger_OpensExistingFile(t *testing.T) {
 
 func TestAuditLogger_Log(t *testing.T) {
         logger := newAuditLoggerForTest(t)
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         entry := AuditEntry{
                 Action:         "install",
@@ -165,7 +165,7 @@ func TestAuditLogger_Log(t *testing.T) {
 
 func TestAuditLogger_LogSetsTimestamp(t *testing.T) {
         logger := newAuditLoggerForTest(t)
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         entry := AuditEntry{
                 Action:  "install",
@@ -179,7 +179,7 @@ func TestAuditLogger_LogSetsTimestamp(t *testing.T) {
 
         data, _ := os.ReadFile(logger.path)
         var logged AuditEntry
-        json.Unmarshal(data, &logged)
+        _ = json.Unmarshal(data, &logged)
 
         // Parse the timestamp
         ts, err := time.Parse(time.RFC3339Nano, logged.Timestamp)
@@ -198,7 +198,7 @@ func TestAuditLogger_LogSetsTimestamp(t *testing.T) {
 
 func TestAuditLogger_AppendOnly(t *testing.T) {
         logger := newAuditLoggerForTest(t)
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         entries := []AuditEntry{
                 {Action: "install", Package: "git", Result: "success"},
@@ -246,7 +246,7 @@ func TestAuditLogger_AppendOnly(t *testing.T) {
 
 func TestAuditLogger_EntryFormat(t *testing.T) {
         logger := newAuditLoggerForTest(t)
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         entry := AuditEntry{
                 Action:         "install",
@@ -282,7 +282,7 @@ func TestAuditLogger_EntryFormat(t *testing.T) {
 
 func TestAuditLogger_OmittedFields(t *testing.T) {
         logger := newAuditLoggerForTest(t)
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         // Entry with minimal fields — optional fields should be omitted
         entry := AuditEntry{
@@ -297,7 +297,7 @@ func TestAuditLogger_OmittedFields(t *testing.T) {
         line := strings.TrimSpace(string(data))
 
         var raw map[string]interface{}
-        json.Unmarshal([]byte(line), &raw)
+        _ = json.Unmarshal([]byte(line), &raw)
 
         // Optional empty fields should be omitted (omitempty)
         if _, ok := raw["error"]; ok {
@@ -310,7 +310,7 @@ func TestAuditLogger_OmittedFields(t *testing.T) {
 
 func TestAuditLogger_FailureEntryWithError(t *testing.T) {
         logger := newAuditLoggerForTest(t)
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         entry := AuditEntry{
                 Action:  "install",
@@ -323,7 +323,7 @@ func TestAuditLogger_FailureEntryWithError(t *testing.T) {
 
         data, _ := os.ReadFile(logger.path)
         var logged AuditEntry
-        json.Unmarshal(data, &logged)
+        _ = json.Unmarshal(data, &logged)
 
         if logged.Result != "failure" {
                 t.Errorf("Result = %q, want %q", logged.Result, "failure")
@@ -370,8 +370,8 @@ func TestAuditLogger_LogAfterClose(t *testing.T) {
 func TestReadAuditLog_NonExistentFile(t *testing.T) {
         tmpDir := t.TempDir()
         origHome := os.Getenv("HOME")
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         entries, err := ReadAuditLog(10)
         if err != nil {
@@ -428,7 +428,7 @@ func TestSplitLines(t *testing.T) {
 
 func TestAuditEntry_WSLFields(t *testing.T) {
         logger := newAuditLoggerForTest(t)
-        defer logger.Close()
+        defer func() { _ = logger.Close() }()
 
         entry := AuditEntry{
                 Action:  "wsl_import",
@@ -441,7 +441,7 @@ func TestAuditEntry_WSLFields(t *testing.T) {
 
         data, _ := os.ReadFile(logger.path)
         var logged AuditEntry
-        json.Unmarshal(data, &logged)
+        _ = json.Unmarshal(data, &logged)
 
         if logged.Target != "ubuntu-22.04" {
                 t.Errorf("Target = %q, want %q", logged.Target, "ubuntu-22.04")
@@ -458,19 +458,19 @@ func TestAuditEntry_WSLFields(t *testing.T) {
 func TestReadAuditLog_WithEntries(t *testing.T) {
         tmpDir := t.TempDir()
         origHome := os.Getenv("HOME")
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         // Create a valid JSONL audit log
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755)
 
         content := `{"timestamp":"2024-01-01T00:00:00Z","action":"install","package":"git","result":"success"}
 {"timestamp":"2024-01-01T00:01:00Z","action":"install","package":"curl","result":"success"}
 {"timestamp":"2024-01-01T00:02:00Z","action":"remove","package":"vim","result":"failure","error":"NOT_MANAGED"}
 `
         logPath := filepath.Join(nexusDir, "audit.log")
-        os.WriteFile(logPath, []byte(content), 0644)
+        _ = os.WriteFile(logPath, []byte(content), 0644)
 
         entries, err := ReadAuditLog(0)
         if err != nil {
@@ -494,11 +494,11 @@ func TestReadAuditLog_WithEntries(t *testing.T) {
 func TestReadAuditLog_WithLimit(t *testing.T) {
         tmpDir := t.TempDir()
         origHome := os.Getenv("HOME")
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755)
 
         content := `{"timestamp":"2024-01-01T00:00:00Z","action":"install","package":"git","result":"success"}
 {"timestamp":"2024-01-01T00:01:00Z","action":"install","package":"curl","result":"success"}
@@ -507,7 +507,7 @@ func TestReadAuditLog_WithLimit(t *testing.T) {
 {"timestamp":"2024-01-01T00:04:00Z","action":"install","package":"tmux","result":"success"}
 `
         logPath := filepath.Join(nexusDir, "audit.log")
-        os.WriteFile(logPath, []byte(content), 0644)
+        _ = os.WriteFile(logPath, []byte(content), 0644)
 
         // Request only the last 2 entries
         entries, err := ReadAuditLog(2)
@@ -528,16 +528,16 @@ func TestReadAuditLog_WithLimit(t *testing.T) {
 func TestReadAuditLog_LimitLargerThanEntries(t *testing.T) {
         tmpDir := t.TempDir()
         origHome := os.Getenv("HOME")
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755)
 
         content := `{"timestamp":"2024-01-01T00:00:00Z","action":"install","package":"git","result":"success"}
 `
         logPath := filepath.Join(nexusDir, "audit.log")
-        os.WriteFile(logPath, []byte(content), 0644)
+        _ = os.WriteFile(logPath, []byte(content), 0644)
 
         // Request 100 entries when there's only 1
         entries, err := ReadAuditLog(100)
@@ -552,18 +552,18 @@ func TestReadAuditLog_LimitLargerThanEntries(t *testing.T) {
 func TestReadAuditLog_InvalidJSONSkipped(t *testing.T) {
         tmpDir := t.TempDir()
         origHome := os.Getenv("HOME")
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755)
 
         content := `{"timestamp":"2024-01-01T00:00:00Z","action":"install","package":"git","result":"success"}
 INVALID LINE HERE
 {"timestamp":"2024-01-01T00:02:00Z","action":"remove","package":"vim","result":"success"}
 `
         logPath := filepath.Join(nexusDir, "audit.log")
-        os.WriteFile(logPath, []byte(content), 0644)
+        _ = os.WriteFile(logPath, []byte(content), 0644)
 
         entries, err := ReadAuditLog(0)
         if err != nil {
@@ -584,14 +584,14 @@ INVALID LINE HERE
 func TestReadAuditLog_EmptyFile(t *testing.T) {
         tmpDir := t.TempDir()
         origHome := os.Getenv("HOME")
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755)
 
         logPath := filepath.Join(nexusDir, "audit.log")
-        os.WriteFile(logPath, []byte(""), 0644)
+        _ = os.WriteFile(logPath, []byte(""), 0644)
 
         entries, err := ReadAuditLog(0)
         if err != nil {

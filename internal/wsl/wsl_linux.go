@@ -35,19 +35,19 @@ type RootFSImage struct {
 	Version     string `json:"version"`
 	URL         string `json:"url"`
 	SHA256      string `json:"sha256"`
-	Size        int64  `json:"size"`
 	Arch        string `json:"arch"`
 	Family      string `json:"family"`
 	Description string `json:"description"`
 	DefaultUser string `json:"default_user"`
+	Size        int64  `json:"size"`
 }
 
 // ImportConfig is a stub on Linux. See import.go (windows) for the real type.
 type ImportConfig struct {
+	Image         *RootFSImage
 	DistroName    string
 	InstallPath   string
 	TarballPath   string
-	Image         *RootFSImage
 	SkipDownload  bool
 	SkipVerify    bool
 	DryRun        bool
@@ -55,17 +55,17 @@ type ImportConfig struct {
 
 // ImportResult is a stub on Linux. See import.go (windows) for the real type.
 type ImportResult struct {
+	StepsCompleted []string      `json:"steps_completed"`
+	Warnings       []string      `json:"warnings"`
 	DistroName     string        `json:"distro_name"`
 	ImageName      string        `json:"image_name"`
 	ImageVersion   string        `json:"image_version"`
 	TarballPath    string        `json:"tarball_path"`
 	TarballSHA256  string        `json:"tarball_sha256"`
 	InstallPath    string        `json:"install_path"`
-	Duration       time.Duration `json:"duration"`
-	StepsCompleted []string      `json:"steps_completed"`
-	Warnings       []string      `json:"warnings"`
-	Aborted        bool          `json:"aborted"`
 	AbortReason    string        `json:"abort_reason,omitempty"`
+	Duration       time.Duration `json:"duration"`
+	Aborted        bool          `json:"aborted"`
 }
 
 // NexusDistro is a stub on Linux.

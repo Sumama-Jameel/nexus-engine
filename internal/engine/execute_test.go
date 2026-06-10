@@ -303,17 +303,17 @@ func TestSanitizeAndExecute_EmptyCommand(t *testing.T) {
 
 func TestSanitizeAndExecute_TimeoutEnforcement(t *testing.T) {
 	// This test verifies that a context with a shorter deadline than
-	// CommandTimeoutSec is respected. We use a cancelled context to
+	// CommandTimeoutSec is respected. We use a canceled context to
 	// simulate timeout without actually waiting.
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
 	_, err := SanitizeAndExecute(ctx, "ls")
 	if err == nil {
-		t.Log("command succeeded despite cancelled context (may happen if very fast)")
+		t.Log("command succeeded despite canceled context (may happen if very fast)")
 	} else {
 		// Should get either a context error or a TIMEOUT error
-		t.Logf("correctly got error with cancelled context: %v", err)
+		t.Logf("correctly got error with canceled context: %v", err)
 	}
 }
 

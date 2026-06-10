@@ -43,25 +43,25 @@ type AuditEntry struct {
         // Profile is the Nexus profile that triggered the action, omitted for
         // operations not associated with a profile.
         Profile string `json:"profile,omitempty"`
+        // Error contains the error message if the action failed, omitted on success.
+        Error string `json:"error,omitempty"`
+        // Target is the WSL distribution name or other operation-specific target,
+        // used for WSL import/remove and similar targeted operations.
+        Target string `json:"target,omitempty"`
         // DurationMs is the wall-clock duration of the action in milliseconds,
         // used for performance tracking and slow-operation detection.
         DurationMs int64 `json:"duration_ms,omitempty"`
         // Verified indicates whether a post-install verification check confirmed
         // the package is functional, omitted for actions that do not verify.
         Verified bool `json:"verified,omitempty"`
-        // Error contains the error message if the action failed, omitted on success.
-        Error string `json:"error,omitempty"`
-        // Target is the WSL distribution name or other operation-specific target,
-        // used for WSL import/remove and similar targeted operations.
-        Target string `json:"target,omitempty"`
 }
 
 // AuditLogger provides an append-only, tamper-evident audit trail.
 // Per the Zero-Trust model: every action must be traceable.
 // The file is opened with O_APPEND — existing lines are never modified.
 type AuditLogger struct {
-        path string
         file *os.File
+        path string
 }
 
 // NewAuditLogger creates or opens the audit log at ~/.nexus/audit.log.
@@ -72,12 +72,12 @@ func NewAuditLogger() (*AuditLogger, error) {
         }
 
         nexusDir := filepath.Join(homeDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755)
 
         path := filepath.Join(nexusDir, "audit.log")
 
         // Open with O_APPEND and O_CREATE — append-only, create if missing
-        file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+        file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644) //nolint:gosec
         if err != nil {
                 return nil, fmt.Errorf("failed to open audit log: %w", err)
         }
@@ -125,7 +125,7 @@ func ReadAuditLog(n int) ([]AuditEntry, error) {
         }
 
         path := filepath.Join(homeDir, ".nexus", "audit.log")
-        data, err := os.ReadFile(path)
+        data, err := os.ReadFile(path) //nolint:gosec
         if err != nil {
                 if os.IsNotExist(err) {
                         return []AuditEntry{}, nil

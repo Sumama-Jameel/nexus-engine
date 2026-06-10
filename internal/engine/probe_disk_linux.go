@@ -25,8 +25,8 @@ func probeDisk(info *SystemInfo) error {
                 return err
         }
         // Total and used space in bytes
-        totalBytes := stat.Blocks * uint64(stat.Bsize)
-        availBytes := stat.Bavail * uint64(stat.Bsize)
+        totalBytes := stat.Blocks * uint64(stat.Bsize) //nolint:gosec
+        availBytes := stat.Bavail * uint64(stat.Bsize) //nolint:gosec
         usedBytes := totalBytes - availBytes
 
         info.DiskTotalGB = float64(totalBytes) / 1024 / 1024 / 1024

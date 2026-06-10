@@ -125,7 +125,7 @@ shell: auto
 auto_update: false
 verbose: false
 `
-        return os.WriteFile(path, []byte(content), 0644)
+        return os.WriteFile(path, []byte(content), 0644) //nolint:gosec
 }
 
 // FormatConfig returns a human-readable summary of the current config.

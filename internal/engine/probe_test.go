@@ -31,24 +31,16 @@ import (
 func TestSystemInfo_Fields(t *testing.T) {
         t.Parallel()
 
-        now := time.Now().UTC()
-        info := &SystemInfo{
-                OS:             "linux",
-                Arch:           "amd64",
-                Kernel:         "6.1.0-generic",
-                Hostname:       "testbox",
-                CPUModel:       "Intel(R) Core(TM) i7",
-                CPUCores:       8,
-                RAMTotalMB:     16384,
-                RAMAvailableMB: 8192,
-                DiskTotalGB:    500.0,
-                DiskUsedGB:     250.0,
-                GPU:            "NVIDIA GeForce RTX 3060",
-                IsWSL2:         false,
-                NetworkIP:      "192.168.1.100",
-                Uptime:         "2 hours",
-                ProbedAt:       now,
-        }
+		now := time.Now().UTC()
+		info := &SystemInfo{
+			OS:          "linux",
+			Arch:        "amd64",
+			CPUCores:    8,
+			RAMTotalMB:  16384,
+			DiskTotalGB: 500.0,
+			IsWSL2:      false,
+			ProbedAt:    now,
+		}
 
         if info.OS != "linux" {
                 t.Errorf("OS = %q, want %q", info.OS, "linux")

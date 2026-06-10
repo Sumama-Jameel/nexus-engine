@@ -28,6 +28,17 @@ import (
 // It aggregates per-package results with overall statistics and, when the
 // run is aborted, the rollback report and abort reason.
 type OrchestratorResult struct {
+        // Packages contains the per-package results in the order they were processed.
+        Packages    []PackageResult `json:"packages"`
+        // Rollback describes what was undone during the automatic rollback that
+        // follows a foundation failure. Nil when no rollback occurred.
+        Rollback    *RollbackReport `json:"rollback,omitempty"`
+        // Preflight holds the pre-flight check results. Nil if pre-flight was skipped.
+        Preflight   *PreFlightResult `json:"preflight,omitempty"`
+        // AbortReason is a human-readable explanation of why the run was aborted.
+        AbortReason string          `json:"abort_reason,omitempty"`
+        // Duration is the total wall-clock time for the orchestrated operation.
+        Duration    time.Duration   `json:"duration_ms"`
         // Total is the number of packages requested for installation.
         Total       int             `json:"total"`
         // Succeeded is the count of packages that installed without error.
@@ -39,20 +50,9 @@ type OrchestratorResult struct {
         Skipped     int             `json:"skipped"`
         // Verified is the count of packages that passed post-install verification.
         Verified    int             `json:"verified"`
-        // Duration is the total wall-clock time for the orchestrated operation.
-        Duration    time.Duration   `json:"duration_ms"`
-        // Packages contains the per-package results in the order they were processed.
-        Packages    []PackageResult `json:"packages"`
         // Aborted indicates whether the orchestrator halted early, typically due
         // to a foundation-package failure.
         Aborted     bool            `json:"aborted"`
-        // AbortReason is a human-readable explanation of why the run was aborted.
-        AbortReason string          `json:"abort_reason,omitempty"`
-        // Rollback describes what was undone during the automatic rollback that
-        // follows a foundation failure. Nil when no rollback occurred.
-        Rollback    *RollbackReport `json:"rollback,omitempty"`
-        // Preflight holds the pre-flight check results. Nil if pre-flight was skipped.
-        Preflight   *PreFlightResult `json:"preflight,omitempty"`
 }
 
 // RollbackReport records what was undone during a rollback after an aborted run.
@@ -290,7 +290,7 @@ func (o *Orchestrator) Install(ctx context.Context, packages []string) (*Orchest
         if !o.dryRun && o.state != nil {
                 for _, pr := range result.Packages {
                         if pr.Success && !pr.Skipped && pr.Verified {
-                                o.state.RecordInstall(pr.Package, o.profile, o.pm.Name(), pr.Verified)
+                                _ = o.state.RecordInstall(pr.Package, o.profile, o.pm.Name(), pr.Verified)
                         }
                 }
         }
@@ -324,8 +324,8 @@ func (o *Orchestrator) installGroup(ctx context.Context, pkgs []string) []Packag
 
         // Install each package concurrently
         type indexedResult struct {
-                index  int
                 result PackageResult
+                index  int
         }
 
         ch := make(chan indexedResult, len(pkgs))
@@ -388,7 +388,7 @@ func (o *Orchestrator) rollback(ctx context.Context, packages []string) *Rollbac
                         report.Removed = append(report.Removed, rr.Package)
                         // Also remove from state tracker
                         if o.state != nil {
-                                o.state.RecordRemove(rr.Package)
+                                _ = o.state.RecordRemove(rr.Package)
                         }
                 } else {
                         report.Failed = append(report.Failed, rr.Package)
@@ -468,7 +468,7 @@ func FormatOrchestratorResult(r *OrchestratorResult) string {
 
 func (o *Orchestrator) logAudit(entry engine.AuditEntry) {
         if o.audit != nil {
-                o.audit.Log(entry)
+                _ = o.audit.Log(entry)
         }
 }
 

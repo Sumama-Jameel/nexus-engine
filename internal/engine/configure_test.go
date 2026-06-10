@@ -643,7 +643,7 @@ func createFakeChezmoiBin(t *testing.T, initExit int, initOutput string) string 
         binDir := t.TempDir()
         script := fmt.Sprintf("#!/bin/sh\nif [ \"$1\" = \"init\" ]; then\n  echo '%s'\n  exit %d\nfi\nexit 0\n", initOutput, initExit)
         chezmoiPath := filepath.Join(binDir, "chezmoi")
-        if err := os.WriteFile(chezmoiPath, []byte(script), 0755); err != nil {
+        if err := os.WriteFile(chezmoiPath, []byte(script), 0755); err != nil { //nolint:gosec
                 t.Fatalf("failed to create fake chezmoi: %v", err)
         }
         return binDir
@@ -719,7 +719,7 @@ func TestConfigure_ChezmoiFound_AlreadyInitialized(t *testing.T) {
 
         // Pre-create the chezmoi data directory to simulate already initialized
         chezmoiDir := filepath.Join(tmpDir, ".local", "share", "chezmoi")
-        if err := os.MkdirAll(chezmoiDir, 0755); err != nil {
+        if err := os.MkdirAll(chezmoiDir, 0755); err != nil { //nolint:gosec
                 t.Fatalf("failed to create chezmoi dir: %v", err)
         }
 
@@ -902,7 +902,7 @@ func TestConfigure_ShellConfigWriteFailure(t *testing.T) {
 
         // Create .bashrc as a directory to cause write failure
         bashrcDir := filepath.Join(tmpDir, ".bashrc")
-        if err := os.MkdirAll(bashrcDir, 0755); err != nil {
+        if err := os.MkdirAll(bashrcDir, 0755); err != nil { //nolint:gosec
                 t.Fatalf("failed to create .bashrc as directory: %v", err)
         }
 
@@ -1113,7 +1113,7 @@ func TestInjectShellConfig_WriteFailure(t *testing.T) {
         tmpDir := t.TempDir()
         // Create a read-only directory to cause write failure
         readOnlyDir := filepath.Join(tmpDir, "readonly")
-        if err := os.MkdirAll(readOnlyDir, 0555); err != nil {
+        if err := os.MkdirAll(readOnlyDir, 0555); err != nil { //nolint:gosec
                 t.Fatalf("failed to create read-only dir: %v", err)
         }
         configPath := filepath.Join(readOnlyDir, ".bashrc")
