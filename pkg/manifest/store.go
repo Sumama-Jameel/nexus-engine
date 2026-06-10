@@ -416,7 +416,7 @@ func (s *ProfileStore) FetchProfile(name string, remoteURL string) error {
         if err != nil {
                 return fmt.Errorf("failed to fetch profile '%s': %w", name, err)
         }
-        defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
         if resp.StatusCode != http.StatusOK {
                 return fmt.Errorf("remote returned HTTP %d for profile '%s'", resp.StatusCode, name)
@@ -507,7 +507,7 @@ func (s *ProfileStore) saveRegistry() error {
         }
 
         if err := os.Rename(tmpPath, filepath.Join(s.dir, "registry.json")); err != nil {
-                os.Remove(tmpPath)
+                _ = os.Remove(tmpPath)
                 return fmt.Errorf("failed to commit registry: %w", err)
         }
 

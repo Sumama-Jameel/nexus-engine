@@ -77,8 +77,8 @@ func Configure(ctx context.Context, envVars map[string]string) *ConfigureResult 
 
         // Step 1: Create ~/.nexus directory
         nexusDir := filepath.Join(homeDir, ".nexus")
-        if err := os.MkdirAll(nexusDir, 0755); err != nil { //nolint:gosec
-                result.Messages = append(result.Messages, fmt.Sprintf("Failed to create %s: %v", nexusDir, err))
+        if mkdirErr := os.MkdirAll(nexusDir, 0755); mkdirErr != nil { //nolint:gosec
+                result.Messages = append(result.Messages, fmt.Sprintf("Failed to create %s: %v", nexusDir, mkdirErr))
         } else {
                 result.NexusDirCreated = true
                 result.NexusDir = nexusDir

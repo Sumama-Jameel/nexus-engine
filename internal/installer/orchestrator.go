@@ -30,13 +30,13 @@ import (
 type OrchestratorResult struct {
         // Packages contains the per-package results in the order they were processed.
         Packages    []PackageResult `json:"packages"`
+        // AbortReason is a human-readable explanation of why the run was aborted.
+        AbortReason string          `json:"abort_reason,omitempty"`
         // Rollback describes what was undone during the automatic rollback that
         // follows a foundation failure. Nil when no rollback occurred.
         Rollback    *RollbackReport `json:"rollback,omitempty"`
         // Preflight holds the pre-flight check results. Nil if pre-flight was skipped.
         Preflight   *PreFlightResult `json:"preflight,omitempty"`
-        // AbortReason is a human-readable explanation of why the run was aborted.
-        AbortReason string          `json:"abort_reason,omitempty"`
         // Duration is the total wall-clock time for the orchestrated operation.
         Duration    time.Duration   `json:"duration_ms"`
         // Total is the number of packages requested for installation.

@@ -315,7 +315,7 @@ func TestDownloadSimulation(t *testing.T) {
 		// Create an HTTP test server (note: httptest creates HTTP, not HTTPS)
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("test content"))
+			_ = w.Write([]byte("test content"))
 		}))
 		defer server.Close()
 
@@ -333,7 +333,7 @@ func TestDownloadSimulation(t *testing.T) {
 		// Create an HTTPS test server
 		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("test content"))
+			_ = w.Write([]byte("test content"))
 		}))
 		defer server.Close()
 

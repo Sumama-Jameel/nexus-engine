@@ -27,6 +27,9 @@ import (
 // by Nexus. It persists to ~/.nexus/state.json and enables idempotent
 // operations, drift detection, and targeted rollback.
 type PackageState struct {
+        // InstalledAt is the UTC timestamp when the package was successfully
+        // installed by the Nexus engine.
+        InstalledAt time.Time `json:"installed_at"`
         // Profile is the name of the Nexus profile that triggered the installation,
         // used to determine ownership during profile removal.
         Profile string `json:"profile"`
@@ -37,9 +40,6 @@ type PackageState struct {
         // Verified indicates whether the package's installation was confirmed by
         // a post-install verification check (e.g., checking the binary exists on PATH).
         Verified bool `json:"verified"`
-        // InstalledAt is the UTC timestamp when the package was successfully
-        // installed by the Nexus engine.
-        InstalledAt time.Time `json:"installed_at"`
 }
 
 // WSLInstanceState records the state of a Nexus-managed WSL2 instance.
@@ -49,6 +49,8 @@ type PackageState struct {
 //   2. `nexus wsl list` shows only our distros (clarity)
 //   3. We can detect drift (user uninstalled a distro outside Nexus)
 type WSLInstanceState struct {
+        // ImportedAt is the UTC timestamp when the WSL2 instance was imported.
+        ImportedAt time.Time `json:"imported_at"`
         // ImageName is the human-readable name of the imported WSL2 distribution,
         // used as the key in the WSLInstances map and as the WSL --name parameter.
         ImageName string `json:"image_name"`
@@ -64,26 +66,24 @@ type WSLInstanceState struct {
         // Family is the distribution family identifier (e.g., "debian", "redhat",
         // "arch"), used to select the correct package manager inside the instance.
         Family string `json:"family"`
-        // ImportedAt is the UTC timestamp when the WSL2 instance was imported.
-        ImportedAt time.Time `json:"imported_at"`
 }
 
 // NexusState is the top-level structure for the persistent state file at
 // ~/.nexus/state.json. It tracks all Nexus-managed packages, applied profiles,
 // and WSL2 instances to enable idempotent operations and drift detection.
 type NexusState struct {
-        // Packages maps package names to their installation state. The key is the
-        // package name as recognized by the system package manager.
-        Packages map[string]PackageState `json:"packages"`
         // ProfilesApplied is the ordered list of profile names that have been
         // applied to this system, tracked to support profile-level operations.
         ProfilesApplied []string `json:"profiles_applied"`
-        // WSLInstances maps WSL2 distribution names to their import state.
-        // Omitted from JSON when empty via omitempty.
-        WSLInstances map[string]WSLInstanceState `json:"wsl_instances,omitempty"`
         // LastModified is the UTC timestamp of the most recent state mutation,
         // updated on every Record* call.
         LastModified time.Time `json:"last_modified"`
+        // Packages maps package names to their installation state. The key is the
+        // package name as recognized by the system package manager.
+        Packages map[string]PackageState `json:"packages"`
+        // WSLInstances maps WSL2 distribution names to their import state.
+        // Omitted from JSON when empty via omitempty.
+        WSLInstances map[string]WSLInstanceState `json:"wsl_instances,omitempty"`
         // Version is the state file schema version. Incremented when the structure
         // changes to enable migration of existing state files.
         Version int `json:"version"`
@@ -94,9 +94,9 @@ type NexusState struct {
 // The state file tracks what Nexus installed so it can make intelligent
 // decisions: skip already-installed packages, detect drift, enable rollback.
 type StateTracker struct {
+        path  string
         state *NexusState
         mu    sync.Mutex
-        path  string
 }
 
 // NewStateTracker creates or loads the state file.
@@ -107,7 +107,7 @@ func NewStateTracker() (*StateTracker, error) {
         }
 
         nexusDir := filepath.Join(homeDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         path := filepath.Join(nexusDir, "state.json")
         tracker := &StateTracker{path: path}

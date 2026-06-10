@@ -70,7 +70,7 @@ func checkLockFiles(files []string) bool {
                         // Other error — can't determine, assume no lock
                         continue
                 }
-                defer lockFile.Close()
+                defer func() { _ = lockFile.Close() }()
 
                 // Try to acquire an exclusive, non-blocking lock
                 // If another process holds it, this will fail immediately
@@ -80,7 +80,7 @@ func checkLockFiles(files []string) bool {
                         return false
                 }
                 // We got the lock — release it immediately
-                syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN)
+                _ = syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN)
         }
 
         return true

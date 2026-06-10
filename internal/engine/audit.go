@@ -72,7 +72,7 @@ func NewAuditLogger() (*AuditLogger, error) {
         }
 
         nexusDir := filepath.Join(homeDir, ".nexus")
-        _ = os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         path := filepath.Join(nexusDir, "audit.log")
 

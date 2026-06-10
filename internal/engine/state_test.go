@@ -108,7 +108,7 @@ func TestNewStateTracker_LoadsExisting(t *testing.T) {
         defer os.Setenv("HOME", origHome)
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         // Write an existing state file
         existing := &NexusState{
@@ -126,7 +126,7 @@ func TestNewStateTracker_LoadsExisting(t *testing.T) {
                 WSLInstances:    make(map[string]WSLInstanceState),
         }
         data, _ := json.MarshalIndent(existing, "", "  ")
-        os.WriteFile(filepath.Join(nexusDir, "state.json"), data, 0644)
+        _ = os.WriteFile(filepath.Join(nexusDir, "state.json"), data, 0644) //nolint:gosec
 
         tracker, err := NewStateTracker()
         if err != nil {
@@ -589,7 +589,7 @@ func TestPackageState_Fields(t *testing.T) {
 
         data, _ := json.Marshal(ps)
         var raw map[string]interface{}
-        json.Unmarshal(data, &raw)
+        _ = json.Unmarshal(data, &raw)
 
         expectedFields := []string{"installed_at", "profile", "verified", "package_manager"}
         for _, f := range expectedFields {
@@ -613,7 +613,7 @@ func TestWSLInstanceState_Fields(t *testing.T) {
 
         data, _ := json.Marshal(ws)
         var raw map[string]interface{}
-        json.Unmarshal(data, &raw)
+        _ = json.Unmarshal(data, &raw)
 
         expectedFields := []string{
                 "image_name", "image_version", "tarball_sha256",

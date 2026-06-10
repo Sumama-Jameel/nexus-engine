@@ -187,13 +187,13 @@ func TestVerifyInstallation_MultiplePackages(t *testing.T) {
 	// missing: not installed → not_found
 	// custom-pkg: installed + not in verifiable map → trusted (verified)
 	expected := map[string]struct {
-		verified bool
 		status   string
+		verified bool
 	}{
-		"git":         {true, "verified"},
-		"curl":        {true, "verified"},
-		"missing":     {false, "not_found"},
-		"custom-pkg":  {true, "verified"},
+		"git":         {"verified", true},
+		"curl":        {"verified", true},
+		"missing":     {"not_found", false},
+		"custom-pkg":  {"verified", true},
 	}
 
 	for _, r := range results {

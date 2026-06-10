@@ -93,11 +93,11 @@ func TestNewAuditLogger_OpensExistingFile(t *testing.T) {
         defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        _ = os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         // Pre-create the audit log with some content
         existing := filepath.Join(nexusDir, "audit.log")
-        _ = os.WriteFile(existing, []byte("{\"test\":true}\n"), 0644)
+        _ = os.WriteFile(existing, []byte("{\"test\":true}\n"), 0644) //nolint:gosec
 
         logger, err := NewAuditLogger()
         if err != nil {
@@ -354,7 +354,7 @@ func TestAuditLogger_Close(t *testing.T) {
 
 func TestAuditLogger_LogAfterClose(t *testing.T) {
         logger := newAuditLoggerForTest(t)
-        logger.Close()
+        _ = logger.Close()
 
         entry := AuditEntry{Action: "install", Package: "git", Result: "success"}
         err := logger.Log(entry)
@@ -463,14 +463,14 @@ func TestReadAuditLog_WithEntries(t *testing.T) {
 
         // Create a valid JSONL audit log
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        _ = os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         content := `{"timestamp":"2024-01-01T00:00:00Z","action":"install","package":"git","result":"success"}
 {"timestamp":"2024-01-01T00:01:00Z","action":"install","package":"curl","result":"success"}
 {"timestamp":"2024-01-01T00:02:00Z","action":"remove","package":"vim","result":"failure","error":"NOT_MANAGED"}
 `
         logPath := filepath.Join(nexusDir, "audit.log")
-        _ = os.WriteFile(logPath, []byte(content), 0644)
+        _ = os.WriteFile(logPath, []byte(content), 0644) //nolint:gosec
 
         entries, err := ReadAuditLog(0)
         if err != nil {
@@ -498,7 +498,7 @@ func TestReadAuditLog_WithLimit(t *testing.T) {
         defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        _ = os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         content := `{"timestamp":"2024-01-01T00:00:00Z","action":"install","package":"git","result":"success"}
 {"timestamp":"2024-01-01T00:01:00Z","action":"install","package":"curl","result":"success"}
@@ -507,7 +507,7 @@ func TestReadAuditLog_WithLimit(t *testing.T) {
 {"timestamp":"2024-01-01T00:04:00Z","action":"install","package":"tmux","result":"success"}
 `
         logPath := filepath.Join(nexusDir, "audit.log")
-        _ = os.WriteFile(logPath, []byte(content), 0644)
+        _ = os.WriteFile(logPath, []byte(content), 0644) //nolint:gosec
 
         // Request only the last 2 entries
         entries, err := ReadAuditLog(2)
@@ -532,12 +532,12 @@ func TestReadAuditLog_LimitLargerThanEntries(t *testing.T) {
         defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        _ = os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         content := `{"timestamp":"2024-01-01T00:00:00Z","action":"install","package":"git","result":"success"}
 `
         logPath := filepath.Join(nexusDir, "audit.log")
-        _ = os.WriteFile(logPath, []byte(content), 0644)
+        _ = os.WriteFile(logPath, []byte(content), 0644) //nolint:gosec
 
         // Request 100 entries when there's only 1
         entries, err := ReadAuditLog(100)
@@ -556,14 +556,14 @@ func TestReadAuditLog_InvalidJSONSkipped(t *testing.T) {
         defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        _ = os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         content := `{"timestamp":"2024-01-01T00:00:00Z","action":"install","package":"git","result":"success"}
 INVALID LINE HERE
 {"timestamp":"2024-01-01T00:02:00Z","action":"remove","package":"vim","result":"success"}
 `
         logPath := filepath.Join(nexusDir, "audit.log")
-        _ = os.WriteFile(logPath, []byte(content), 0644)
+        _ = os.WriteFile(logPath, []byte(content), 0644) //nolint:gosec
 
         entries, err := ReadAuditLog(0)
         if err != nil {
@@ -588,10 +588,10 @@ func TestReadAuditLog_EmptyFile(t *testing.T) {
         defer func() { _ = os.Setenv("HOME", origHome) }()
 
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        _ = os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         logPath := filepath.Join(nexusDir, "audit.log")
-        _ = os.WriteFile(logPath, []byte(""), 0644)
+        _ = os.WriteFile(logPath, []byte(""), 0644) //nolint:gosec
 
         entries, err := ReadAuditLog(0)
         if err != nil {

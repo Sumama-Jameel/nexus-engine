@@ -88,12 +88,12 @@ func (d *Dependencies) RemovePackages(ctx context.Context, packages []string) (*
 	if d.DryRun {
 		for _, pkg := range result.ToRemove {
 			result.PackageResults = append(result.PackageResults, installer.PackageResult{
-				Package: pkg,
-				Action:  "remove",
-				Success: true,
-				Skipped: true,
-				SkipReason: "dry-run",
-			})
+					Package:    pkg,
+					Action:     "remove",
+					Success:    true,
+					Skipped:    true,
+					SkipReason: "dry-run",
+				})
 		}
 		return result, nil
 	}
@@ -105,7 +105,7 @@ func (d *Dependencies) RemovePackages(ctx context.Context, packages []string) (*
 
 	for _, pr := range removeResults {
 		if pr.Success {
-			d.State.RecordRemove(pr.Package)
+			_ = d.State.RecordRemove(pr.Package)
 			d.logAudit(engine.AuditEntry{
 				Action:         "remove",
 				Package:        pr.Package,
@@ -146,10 +146,10 @@ func (d *Dependencies) UpdatePackages(ctx context.Context, packages []string) (*
 		for _, pkg := range packages {
 			result.Packages = append(result.Packages, pkg)
 			result.PackageResults = append(result.PackageResults, installer.PackageResult{
-				Package: pkg,
-				Action:  "update",
-				Success: true,
-				Skipped: true,
+				Package:    pkg,
+				Action:     "update",
+				Success:    true,
+				Skipped:    true,
 				SkipReason: "dry-run",
 			})
 		}
@@ -208,7 +208,7 @@ func (d *Dependencies) ApplyProfile(ctx context.Context, name string) (*installe
 	}
 
 	// Record profile as applied (non-fatal)
-	d.ProfileStore.RecordApplied(name)
+	_ = d.ProfileStore.RecordApplied(name)
 
 	return result, profile, nil
 }
@@ -226,6 +226,6 @@ func boolToResult(b bool) string {
 // changes the operation's outcome.
 func (d *Dependencies) logAudit(entry engine.AuditEntry) {
 	if d.Audit != nil {
-		d.Audit.Log(entry)
+		_ = d.Audit.Log(entry)
 	}
 }

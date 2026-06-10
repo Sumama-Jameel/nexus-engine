@@ -29,6 +29,8 @@ import (
 // network, and virtualization state, which drives all downstream decisions about
 // package managers, profiles, and platform-specific behavior.
 type SystemInfo struct {
+        // ProbedAt is the UTC timestamp when the probe was executed.
+        ProbedAt time.Time `json:"probed_at"`
         // OS is the operating system identifier as reported by runtime.GOOS
         // (e.g., "linux", "windows", "darwin").
         OS string `json:"os"`
@@ -60,8 +62,6 @@ type SystemInfo struct {
         // IsWSL2 indicates whether the system is running inside Windows Subsystem
         // for Linux version 2, detected by checking /proc/version for Microsoft markers.
         IsWSL2 bool `json:"is_wsl2"`
-        // ProbedAt is the UTC timestamp when the probe was executed.
-        ProbedAt time.Time `json:"probed_at"`
 }
 
 // Probe executes the system probe: queries OS, hardware, and network information.

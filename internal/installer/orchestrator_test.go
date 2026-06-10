@@ -414,8 +414,8 @@ func TestOrchestrator_groupByPriority(t *testing.T) {
 
         tests := []struct {
                 packages   []string
-                wantGroups map[int][]string
                 name       string
+                wantGroups map[int][]string
         }{
                 {
                         name:     "mixed_priorities",
@@ -706,7 +706,7 @@ func TestOrchestrator_Install_AuditEntries(t *testing.T) {
         if err != nil {
                 t.Fatalf("failed to create AuditLogger: %v", err)
         }
-        defer audit.Close()
+        defer func() { _ = audit.Close() }()
 
         state, _ := engine.NewStateTracker()
 

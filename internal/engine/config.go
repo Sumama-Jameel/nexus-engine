@@ -65,7 +65,7 @@ func InitConfig() (*NexusConfig, error) {
         nexusDir := filepath.Join(homeDir, ".nexus")
 
         // Ensure the nexus directory exists
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         viper.SetConfigName("config")
         viper.SetConfigType("yaml")
@@ -87,7 +87,7 @@ func InitConfig() (*NexusConfig, error) {
                 if _, ok := err.(viper.ConfigFileNotFoundError); ok {
                         // No config file found — create one with defaults
                         configPath := filepath.Join(nexusDir, "config.yaml")
-                        if err := createDefaultConfigFile(configPath); err != nil {
+                        if createErr := createDefaultConfigFile(configPath); createErr != nil {
                                 // Non-fatal: just use defaults without a file
                                 return configFromViper(), nil
                         }

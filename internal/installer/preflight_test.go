@@ -274,11 +274,11 @@ func TestBoolIcon(t *testing.T) {
         t.Parallel()
 
         tests := []struct {
-                input    bool
                 expected string
+                input    bool
         }{
-                {true, "✅"},
-                {false, "❌"},
+                {"✅", true},
+                {"❌", false},
         }
 
         for _, tt := range tests {
@@ -769,13 +769,13 @@ func TestCheckLock_LockFileHeldByAnotherProcess(t *testing.T) {
         go func() {
                 defer wg.Done()
                 // Acquire exclusive lock
-                syscall.Flock(int(f.Fd()), syscall.LOCK_EX)
+                _ = syscall.Flock(int(f.Fd()), syscall.LOCK_EX)
                 close(lockReleased) // Signal that we have the lock
                 // Wait for test to signal us to release
                 time.Sleep(200 * time.Millisecond)
                 // Release the lock
-                syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
-                f.Close()
+                _ = syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
+                _ = f.Close()
         }()
 
         // Wait for the goroutine to acquire the lock
@@ -1373,7 +1373,7 @@ func TestCheckLockFiles_LockHeldByAnotherProcess(t *testing.T) {
         lockPath := filepath.Join(tmpDir, "test.lck")
 
         // Create the lock file
-        f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDONLY, 0644)
+        f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDONLY, 0644) //nolint:gosec
         if err != nil {
                 t.Fatalf("failed to create lock file: %v", err)
         }

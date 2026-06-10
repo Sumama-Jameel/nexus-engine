@@ -41,6 +41,9 @@ import (
 // injected from main.go, ensuring the runner has no global state,
 // no init() functions, and no direct OS dependencies.
 type Dependencies struct {
+	// Family is the OS family identifier (e.g., "debian", "arch", "fedora", "alpine").
+	Family string
+
 	// PM is the package manager implementation (apt, pacman, dnf, apk).
 	PM installer.PackageManager
 
@@ -52,9 +55,6 @@ type Dependencies struct {
 
 	// Env contains the detected environment information (OS, WSL2, etc.).
 	Env *bridge.EnvironmentInfo
-
-	// Family is the OS family identifier (e.g., "debian", "arch", "fedora", "alpine").
-	Family string
 
 	// ExecFn is the security-gated command execution function.
 	// MUST be wired to engine.SanitizeAndExecute for Zero-Trust compliance.

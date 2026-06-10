@@ -31,7 +31,6 @@ import (
 func TestSystemInfo_Fields(t *testing.T) {
         t.Parallel()
 
-		now := time.Now().UTC()
 		info := &SystemInfo{
 			OS:          "linux",
 			Arch:        "amd64",
@@ -39,7 +38,6 @@ func TestSystemInfo_Fields(t *testing.T) {
 			RAMTotalMB:  16384,
 			DiskTotalGB: 500.0,
 			IsWSL2:      false,
-			ProbedAt:    now,
 		}
 
         if info.OS != "linux" {

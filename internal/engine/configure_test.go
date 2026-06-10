@@ -210,7 +210,7 @@ func TestInjectShellConfig_NewFile(t *testing.T) {
                 t.Fatalf("injectShellConfig on new file failed: %v", err)
         }
 
-        data, err := os.ReadFile(configPath)
+        data, err := os.ReadFile(configPath) //nolint:gosec
         if err != nil {
                 t.Fatalf("failed to read config file: %v", err)
         }
@@ -229,7 +229,7 @@ func TestInjectShellConfig_AppendToExisting(t *testing.T) {
         configPath := filepath.Join(tmpDir, ".bashrc")
 
         existing := "# My existing bash config\nalias ll='ls -la'\n"
-        os.WriteFile(configPath, []byte(existing), 0644)
+        _ = os.WriteFile(configPath, []byte(existing), 0644) //nolint:gosec
 
         config := generateBashConfig(map[string]string{"BAR": "baz"})
 
@@ -238,7 +238,7 @@ func TestInjectShellConfig_AppendToExisting(t *testing.T) {
                 t.Fatalf("injectShellConfig on existing file failed: %v", err)
         }
 
-        data, _ := os.ReadFile(configPath)
+        data, _ := os.ReadFile(configPath) //nolint:gosec
         content := string(data)
 
         if !strings.Contains(content, "alias ll='ls -la'") {
@@ -440,7 +440,7 @@ func TestConfigureResult_JSONFields(t *testing.T) {
         }
 
         var raw map[string]interface{}
-        json.Unmarshal(data, &raw)
+        _ = json.Unmarshal(data, &raw)
 
         expectedFields := []string{
                 "chezmoi_installed", "chezmoi_initialized", "shell_config_written",
@@ -549,7 +549,7 @@ func TestConfigure_NexusDirAlreadyExists(t *testing.T) {
 
         // Pre-create the .nexus directory
         nexusDir := filepath.Join(tmpDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+        _ = os.MkdirAll(nexusDir, 0755) //nolint:gosec
 
         origShell := os.Getenv("SHELL")
         os.Setenv("SHELL", "/bin/bash")
@@ -1040,7 +1040,7 @@ func TestInjectShellConfig_ReplaceBlockWithoutProtocolHeader(t *testing.T) {
                 t.Fatalf("injectShellConfig failed: %v", err)
         }
 
-        data, err := os.ReadFile(configPath)
+        data, err := os.ReadFile(configPath) //nolint:gosec
         if err != nil {
                 t.Fatalf("failed to read config file: %v", err)
         }
@@ -1083,7 +1083,7 @@ func TestInjectShellConfig_ReplaceBlockWithProtocolAfterStart(t *testing.T) {
                 t.Fatalf("injectShellConfig failed: %v", err)
         }
 
-        data, err := os.ReadFile(configPath)
+        data, err := os.ReadFile(configPath) //nolint:gosec
         if err != nil {
                 t.Fatalf("failed to read config file: %v", err)
         }
@@ -1141,7 +1141,7 @@ func TestInjectShellConfig_ExistingFileWithoutNexusBlock(t *testing.T) {
                 t.Fatalf("injectShellConfig failed: %v", err)
         }
 
-        data, err := os.ReadFile(configPath)
+        data, err := os.ReadFile(configPath) //nolint:gosec
         if err != nil {
                 t.Fatalf("failed to read config file: %v", err)
         }
@@ -1720,7 +1720,7 @@ func TestInjectShellConfig_MalformedMarkers_NEXUSENDBeforeNEXUSSTART(t *testing.
                 t.Fatalf("injectShellConfig failed: %v", err)
         }
 
-        data, err := os.ReadFile(configPath)
+        data, err := os.ReadFile(configPath) //nolint:gosec
         if err != nil {
                 t.Fatalf("failed to read config file: %v", err)
         }

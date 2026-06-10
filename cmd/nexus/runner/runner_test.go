@@ -126,8 +126,8 @@ func createTestState(t *testing.T) *engine.StateTracker {
 	t.Helper()
 	homeDir := t.TempDir()
 	statePath := filepath.Join(homeDir, ".nexus", "state.json")
-	os.MkdirAll(filepath.Dir(statePath), 0755)
-	os.WriteFile(statePath, []byte(`{"version":1,"packages":{},"profiles_applied":[]}`), 0644)
+	_ = os.MkdirAll(filepath.Dir(statePath), 0755)
+	_ = os.WriteFile(statePath, []byte(`{"version":1,"packages":{},"profiles_applied":[]}`), 0644)
 
 	// Use the real StateTracker but we need to point it to our temp dir
 	// Since NewStateTracker uses os.UserHomeDir, we override HOME
@@ -220,7 +220,7 @@ func TestRemovePackages_DryRun(t *testing.T) {
 	deps.DryRun = true
 
 	// Record a package in state first
-	deps.State.RecordInstall("git", "test", "apt", true)
+	_ = deps.State.RecordInstall("git", "test", "apt", true)
 
 	result, err := deps.RemovePackages(context.Background(), []string{"git"})
 	if err != nil {
@@ -339,8 +339,8 @@ func TestRemovePackages_MixedManagedAndUnmanaged(t *testing.T) {
 	deps := createTestDependencies(t)
 
 	// Record some packages in state
-	deps.State.RecordInstall("git", "test", "apt", true)
-	deps.State.RecordInstall("curl", "test", "apt", true)
+	_ = deps.State.RecordInstall("git", "test", "apt", true)
+	_ = deps.State.RecordInstall("curl", "test", "apt", true)
 
 	// Remove one managed and one unmanaged
 	result, err := deps.RemovePackages(context.Background(), []string{"git", "unknown-pkg"})
@@ -361,8 +361,8 @@ func TestRemovePackages_DependencyWarnings(t *testing.T) {
 	deps := createTestDependencies(t)
 
 	// Record foundation and language packages
-	deps.State.RecordInstall("ca-certificates", "test", "apt", true)
-	deps.State.RecordInstall("python3", "test", "apt", true)
+	_ = deps.State.RecordInstall("ca-certificates", "test", "apt", true)
+	_ = deps.State.RecordInstall("python3", "test", "apt", true)
 
 	// Removing a foundation package should warn about dependent language packages
 	result, err := deps.RemovePackages(context.Background(), []string{"ca-certificates"})

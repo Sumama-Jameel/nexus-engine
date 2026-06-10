@@ -34,9 +34,9 @@ func setupTestStore(t *testing.T) (*ProfileStore, func()) {
         t.Helper()
         origHome := os.Getenv("HOME")
         tmpDir := t.TempDir()
-        os.Setenv("HOME", tmpDir)
+        _ = os.Setenv("HOME", tmpDir)
         cleanup := func() {
-                os.Setenv("HOME", origHome)
+                _ = os.Setenv("HOME", origHome)
         }
         store, err := NewProfileStore()
         if err != nil {
@@ -70,8 +70,8 @@ func TestNewProfileStore(t *testing.T) {
 func TestNewProfileStore_RegistryCreation(t *testing.T) {
         origHome := os.Getenv("HOME")
         tmpDir := t.TempDir()
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         store, err := NewProfileStore()
         if err != nil {
@@ -93,8 +93,8 @@ func TestNewProfileStore_RegistryCreation(t *testing.T) {
 func TestNewProfileStore_RegistryLoad(t *testing.T) {
         origHome := os.Getenv("HOME")
         tmpDir := t.TempDir()
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         // First: create a store and write some data
         store1, err := NewProfileStore()
@@ -107,8 +107,8 @@ func TestNewProfileStore_RegistryLoad(t *testing.T) {
                 Source:  SourceLocal,
                 SHA256:  "abc123",
         }
-        if err := store1.saveRegistry(); err != nil {
-                t.Fatalf("saveRegistry failed: %v", err)
+        if saveErr := store1.saveRegistry(); saveErr != nil {
+                t.Fatalf("saveRegistry failed: %v", saveErr)
         }
 
         // Second: create a new store pointing to the same dir; it should load the existing registry
@@ -184,8 +184,8 @@ func TestProfileStore_Initialize_Idempotent(t *testing.T) {
         bundledModified := map[string]string{
                 "base-dev": modifiedYAML,
         }
-        if err := store.Initialize(bundledModified); err != nil {
-                t.Fatalf("second Initialize failed: %v", err)
+        if initErr := store.Initialize(bundledModified); initErr != nil {
+                t.Fatalf("second Initialize failed: %v", initErr)
         }
 
         // The original content should NOT be overwritten (file already exists)
@@ -831,7 +831,7 @@ targets:
       - curl
 `
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                fmt.Fprint(w, fetchYAML)
+                _ = fmt.Fprint(w, fetchYAML)
         }))
         defer cleanup()
 
@@ -910,7 +910,7 @@ func TestFetchProfile_HTTPError(t *testing.T) {
 
 func TestFetchProfile_InvalidContent(t *testing.T) {
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                fmt.Fprint(w, "not: valid: yaml: [")
+                _ = fmt.Fprint(w, "not: valid: yaml: [")
         }))
         defer cleanup()
 
@@ -957,7 +957,7 @@ targets:
       - curl
 `
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                fmt.Fprint(w, v2YAML)
+                _ = fmt.Fprint(w, v2YAML)
         }))
         defer cleanup()
 
@@ -1195,7 +1195,7 @@ func TestProfileStore_Initialize_ExistingProfileReadFails(t *testing.T) {
         if err := os.Chmod(path, 0000); err != nil {
                 t.Fatalf("failed to chmod profile: %v", err)
         }
-        defer os.Chmod(path, 0644) // restore for cleanup
+        defer func() { _ = os.Chmod(path, 0644) }() // restore for cleanup
 
         bundled := map[string]string{
                 "base-dev": validProfileYAML,
@@ -1248,8 +1248,8 @@ targets: []
 func TestProfileStore_Initialize_WriteFails(t *testing.T) {
         origHome := os.Getenv("HOME")
         tmpDir := t.TempDir()
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         store, err := NewProfileStore()
         if err != nil {
@@ -1257,10 +1257,10 @@ func TestProfileStore_Initialize_WriteFails(t *testing.T) {
         }
 
         // Make the profiles directory read-only so writing a profile fails
-        if err := os.Chmod(store.dir, 0555); err != nil {
+        if err := os.Chmod(store.dir, 0555); err != nil { //nolint:gosec
                 t.Fatalf("failed to chmod profiles dir: %v", err)
         }
-        defer os.Chmod(store.dir, 0755) // restore for cleanup
+        defer func() { _ = os.Chmod(store.dir, 0755) }() // restore for cleanup
 
         bundled := map[string]string{
                 "base-dev": validProfileYAML,
@@ -1284,7 +1284,7 @@ func TestFetchProfile_ConnectionError(t *testing.T) {
 
         // Create a server and immediately close it to force a connection error
         ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                fmt.Fprint(w, "should not reach")
+                _ = fmt.Fprint(w, "should not reach")
         }))
         u, _ := url.Parse(ts.URL)
         host := u.Hostname()
@@ -1359,7 +1359,7 @@ targets:
       - curl
 `
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                fmt.Fprint(w, v2YAML)
+                _ = fmt.Fprint(w, v2YAML)
         }))
         defer cleanup()
 
@@ -1397,7 +1397,7 @@ targets:
 
         // Serve same version from test server (no drift)
         ts, cleanup := setupFetchTest(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                fmt.Fprint(w, v1YAML)
+                _ = fmt.Fprint(w, v1YAML)
         }))
         defer cleanup()
 
@@ -1455,8 +1455,8 @@ func TestValidateRemoteURL_FTPScheme(t *testing.T) {
 func TestProfileStore_SaveRegistry_WriteFails(t *testing.T) {
         origHome := os.Getenv("HOME")
         tmpDir := t.TempDir()
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         store, err := NewProfileStore()
         if err != nil {
@@ -1464,10 +1464,10 @@ func TestProfileStore_SaveRegistry_WriteFails(t *testing.T) {
         }
 
         // Make the profiles directory read-only so writing registry.json.tmp fails
-        if err := os.Chmod(store.dir, 0555); err != nil {
+        if err := os.Chmod(store.dir, 0555); err != nil { //nolint:gosec
                 t.Fatalf("failed to chmod profiles dir: %v", err)
         }
-        defer os.Chmod(store.dir, 0755) // restore for cleanup
+        defer func() { _ = os.Chmod(store.dir, 0755) }() // restore for cleanup
 
         // Try to save a profile which calls saveRegistry
         err = store.SaveProfile("test-profile", []byte(validProfileYAML), SourceLocal)
@@ -1479,8 +1479,8 @@ func TestProfileStore_SaveRegistry_WriteFails(t *testing.T) {
 func TestProfileStore_RemoveProfile_SaveRegistryFails(t *testing.T) {
         origHome := os.Getenv("HOME")
         tmpDir := t.TempDir()
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         store, err := NewProfileStore()
         if err != nil {
@@ -1488,15 +1488,15 @@ func TestProfileStore_RemoveProfile_SaveRegistryFails(t *testing.T) {
         }
 
         // Save a profile first (needs writable dir)
-        if err := store.SaveProfile("remove-me", []byte(validProfileYAML), SourceLocal); err != nil {
-                t.Fatalf("SaveProfile failed: %v", err)
+        if saveErr := store.SaveProfile("remove-me", []byte(validProfileYAML), SourceLocal); saveErr != nil {
+                t.Fatalf("SaveProfile failed: %v", saveErr)
         }
 
         // Make the directory read-only so saveRegistry fails during remove
-        if err := os.Chmod(store.dir, 0555); err != nil {
+        if err := os.Chmod(store.dir, 0555); err != nil { //nolint:gosec
                 t.Fatalf("failed to chmod profiles dir: %v", err)
         }
-        defer os.Chmod(store.dir, 0755) // restore for cleanup
+        defer func() { _ = os.Chmod(store.dir, 0755) }() // restore for cleanup
 
         err = store.RemoveProfile("remove-me", false)
         if err == nil {
@@ -1507,8 +1507,8 @@ func TestProfileStore_RemoveProfile_SaveRegistryFails(t *testing.T) {
 func TestProfileStore_RecordApplied_SaveRegistryFails(t *testing.T) {
         origHome := os.Getenv("HOME")
         tmpDir := t.TempDir()
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         store, err := NewProfileStore()
         if err != nil {
@@ -1516,15 +1516,15 @@ func TestProfileStore_RecordApplied_SaveRegistryFails(t *testing.T) {
         }
 
         // Save a profile first
-        if err := store.SaveProfile("applied-test", []byte(validProfileYAML), SourceLocal); err != nil {
-                t.Fatalf("SaveProfile failed: %v", err)
+        if saveErr := store.SaveProfile("applied-test", []byte(validProfileYAML), SourceLocal); saveErr != nil {
+                t.Fatalf("SaveProfile failed: %v", saveErr)
         }
 
         // Make the directory read-only so saveRegistry fails
-        if err := os.Chmod(store.dir, 0555); err != nil {
+        if err := os.Chmod(store.dir, 0555); err != nil { //nolint:gosec
                 t.Fatalf("failed to chmod profiles dir: %v", err)
         }
-        defer os.Chmod(store.dir, 0755) // restore for cleanup
+        defer func() { _ = os.Chmod(store.dir, 0755) }() // restore for cleanup
 
         err = store.RecordApplied("applied-test")
         if err == nil {
@@ -1557,10 +1557,10 @@ func TestNewProfileStore_MkdirAllFails(t *testing.T) {
         if err := os.MkdirAll(readOnlyDir, 0555); err != nil {
                 t.Fatalf("failed to create read-only dir: %v", err)
         }
-        os.Setenv("HOME", filepath.Join(readOnlyDir, "subdir"))
+        _ = os.Setenv("HOME", filepath.Join(readOnlyDir, "subdir"))
         defer func() {
-                os.Setenv("HOME", origHome)
-                os.Chmod(readOnlyDir, 0755) // restore for cleanup
+                _ = os.Setenv("HOME", origHome)
+                _ = os.Chmod(readOnlyDir, 0755) // restore for cleanup
         }()
 
         _, err := NewProfileStore()
@@ -1600,8 +1600,8 @@ func TestProfileStore_LoadProfile_IntegrityCheckFails(t *testing.T) {
 func TestProfileStore_SaveRegistry_RenameFails(t *testing.T) {
         origHome := os.Getenv("HOME")
         tmpDir := t.TempDir()
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         store, err := NewProfileStore()
         if err != nil {
@@ -1627,8 +1627,8 @@ func TestProfileStore_SaveRegistry_RenameFails(t *testing.T) {
 func TestNewProfileStore_CorruptRegistry(t *testing.T) {
         origHome := os.Getenv("HOME")
         tmpDir := t.TempDir()
-        os.Setenv("HOME", tmpDir)
-        defer os.Setenv("HOME", origHome)
+        _ = os.Setenv("HOME", tmpDir)
+        defer func() { _ = os.Setenv("HOME", origHome) }()
 
         // Create the profiles directory and write a corrupt registry
         profilesDir := filepath.Join(tmpDir, ".nexus", "profiles")
