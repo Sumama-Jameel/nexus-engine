@@ -1,0 +1,153 @@
+# Nexus Protocol — CI Pipeline
+# V6: "The Global Open Source Release"
+# Runs on every push and PR to main. Enforces test, lint, and build quality gates.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dco:
+    name: DCO Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify DCO sign-off
+        run: |
+          # Check that all commits in the PR have Signed-off-by
+          # For PRs, compare against the merge base
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            COMMITS=$(git log "origin/main..HEAD" --format='%H')
+          else
+            COMMITS=$(git log -1 --format='%H')
+          fi
+          MISSING=0
+          for commit in $COMMITS; do
+            if ! git log -1 --format='%B' "$commit" | grep -q 'Signed-off-by:'; then
+              echo "❌ Commit $commit is missing Signed-off-by (DCO)"
+              git log -1 --oneline "$commit"
+              MISSING=1
+            fi
+          done
+          if [ "$MISSING" -eq 1 ]; then
+            echo ""
+            echo "DCO check failed. Add Signed-off-by to your commits:"
+            echo "  git commit -s -m 'your message'"
+            echo "  or: git rebase --signoff main"
+            exit 1
+          fi
+          echo "✅ All commits have DCO sign-off"
+
+  license-headers:
+    name: License Headers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Apache 2.0 license headers
+        run: |
+          ./scripts/check-license-headers.sh
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Run tests with race detector
+        run: go test -race -count=1 ./...
+
+      - name: Run tests with coverage
+        run: go test -coverprofile=coverage.out ./...
+
+      - name: Enforce coverage threshold
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%')
+          echo "Total coverage: ${COVERAGE}%"
+          # Minimum threshold — coverage ratchet only goes UP
+          MINIMUM=80
+          if [ "$(echo "$COVERAGE < $MINIMUM" | bc -l)" -eq 1 ]; then
+            echo "❌ Coverage ${COVERAGE}% is below minimum ${MINIMUM}%"
+            echo "Run ./scripts/coverage-ratchet.sh locally to check before pushing."
+            exit 1
+          fi
+          echo "✅ Coverage ${COVERAGE}% meets minimum ${MINIMUM}%"
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          BINARY=nexus-${{ matrix.goos }}-${{ matrix.goarch }}
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY="${BINARY}.exe"
+          fi
+          go build -ldflags "-s -w -X main.nexusVersion=$(cat Makefile | grep 'VERSION' | head -1 | cut -d'=' -f2 | tr -d ' ')" -o "${BINARY}" ./cmd/nexus/
+
+      - name: Verify binary exists
+        run: |
+          BINARY=nexus-${{ matrix.goos }}-${{ matrix.goarch }}
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY="${BINARY}.exe"
+          fi
+          test -f "${BINARY}" && echo "Build successful: ${BINARY}"

@@ -1,0 +1,32 @@
+# REUSE.toml — Machine-readable licensing information
+# https://reuse.software/
+#
+# Nexus Protocol Engine is licensed under Apache License 2.0.
+# This file helps automated tools verify license compliance.
+
+version = 1
+
+[[annotations]]
+path = [
+    "*.md",
+    ".github/**/*.yml",
+    ".github/**/*.md",
+    "Makefile",
+    ".goreleaser.yml",
+    ".golangci.yml",
+    ".gitignore",
+    ".coverage-threshold",
+    "scripts/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024-2026 Nexus Protocol Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+    "pkg/manifest/defaults/*.yaml",
+    "pkg/manifest/schemas/*.json",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024-2026 Nexus Protocol Contributors"
+SPDX-License-Identifier = "Apache-2.0"

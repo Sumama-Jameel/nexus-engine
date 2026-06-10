@@ -1,0 +1,32 @@
+# Nexus Protocol — Dependabot Configuration
+# V6: "The Global Open Source Release"
+# Automatically creates PRs for dependency updates.
+
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - automated
+    commit-message:
+      prefix: "deps:"
+      include: scope
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - ci
+      - automated
+    commit-message:
+      prefix: "ci:"
+      include: scope
+    open-pull-requests-limit: 3
