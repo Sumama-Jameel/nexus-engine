@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -376,7 +377,7 @@ func TestRemovePackages_DependencyWarnings(t *testing.T) {
 
 	found := false
 	for _, w := range result.DependencyWarnings {
-		if contains(w, "python3") {
+		if strings.Contains(w, "python3") {
 			found = true
 			break
 		}
@@ -384,19 +385,6 @@ func TestRemovePackages_DependencyWarnings(t *testing.T) {
 	if !found {
 		t.Fatalf("expected warning about python3, got warnings: %v", result.DependencyWarnings)
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && (s[0] == substr[0] && containsHelper(s, substr)))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
 func TestInstallPackages_WithError(t *testing.T) {
@@ -408,8 +396,14 @@ func TestInstallPackages_WithError(t *testing.T) {
 		},
 	}
 
-	_, _, err := deps.InstallPackages(context.Background(), []string{"nonexistent"}, "test")
-	if err == nil {
-		t.Fatal("expected error from install")
+	result, _, err := deps.InstallPackages(context.Background(), []string{"nonexistent"}, "test")
+	if err != nil {
+		t.Fatalf("unexpected error return: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if result.Failed == 0 {
+		t.Fatal("expected failed packages in result")
 	}
 }
