@@ -33,15 +33,15 @@ import (
 )
 
 var (
-	outputJSON     bool
-	initConfigPath string
-	profilePath    string
-	dryRun         bool
-	forceRemove    bool
-	wslDistroName  string
-	wslSkipVerify  bool
+	outputJSON      bool
+	initConfigPath  string
+	profilePath     string
+	dryRun          bool
+	forceRemove     bool
+	wslDistroName   string
+	wslSkipVerify   bool
 	wslSkipDownload bool
-	nexusVersion   = "0.6.0"
+	nexusVersion    = "0.6.0"
 )
 
 func main() {
@@ -242,7 +242,7 @@ On Linux, WSL2 import commands are not available — use 'nexus probe' instead.`
 		Short: "Check if the system is ready for Nexus WSL2 setup",
 		Long: `Quick readiness check — exits 0 if ready, 1 if not.
 Useful for scripting and CI/CD pipelines.`,
-		RunE:  runWSLCheck,
+		RunE: runWSLCheck,
 	}
 
 	// ─── V5 Commands: WSL2 Import (The Bridge) ───
@@ -1375,8 +1375,8 @@ func runWSLCheck(cmd *cobra.Command, args []string) error {
 		// The JSON path MUST also exit 1 when not ready, so that
 		// CI/CD pipelines can reliably test readiness via exit code.
 		_ = jsonOutput(map[string]interface{}{
-			"ready":     status.Ready,
-			"blockers":  status.Blockers,
+			"ready":    status.Ready,
+			"blockers": status.Blockers,
 		})
 		if !status.Ready {
 			os.Exit(1)
@@ -1541,7 +1541,7 @@ func runWSLSetup(cmd *cobra.Command, args []string) error {
 	status := bridge.DetectWSL2Status(ctx)
 	if !status.Ready {
 		if outputJSON {
-			jsonOutput(map[string]interface{}{
+			_ = jsonOutput(map[string]interface{}{
 				"ready": false, "blockers": status.Blockers,
 				"recommendations": status.Recommendations,
 			})
@@ -1560,7 +1560,7 @@ func runWSLSetup(cmd *cobra.Command, args []string) error {
 	image, err := wsl.FindImage("nexus-alpine")
 	if err != nil {
 		if outputJSON {
-			jsonOutput(map[string]interface{}{"error": err.Error()})
+			_ = jsonOutput(map[string]interface{}{"error": err.Error()})
 		} else {
 			fmt.Printf("  ⛔ %v\n", err)
 		}
@@ -1569,7 +1569,7 @@ func runWSLSetup(cmd *cobra.Command, args []string) error {
 
 	if err := wsl.ValidateDistroName(wslDistroName); err != nil {
 		if outputJSON {
-			jsonOutput(map[string]interface{}{"error": fmt.Sprintf("invalid distro name: %v", err)})
+			_ = jsonOutput(map[string]interface{}{"error": fmt.Sprintf("invalid distro name: %v", err)})
 		} else {
 			fmt.Printf("  ⛔ Invalid distro name: %v\n", err)
 		}
@@ -1641,7 +1641,7 @@ func runWSLRemove(cmd *cobra.Command, args []string) error {
 
 	if !wsl.IsImportAvailable() {
 		if outputJSON {
-			jsonOutput(map[string]interface{}{"error": "WSL2 management is only available on Windows"})
+			_ = jsonOutput(map[string]interface{}{"error": "WSL2 management is only available on Windows"})
 		} else {
 			fmt.Println("\n  ⛔ WSL2 management is only available on Windows")
 		}
@@ -1656,7 +1656,7 @@ func runWSLRemove(cmd *cobra.Command, args []string) error {
 
 	if !isManaged && !forceRemove {
 		if outputJSON {
-			jsonOutput(map[string]interface{}{
+			_ = jsonOutput(map[string]interface{}{
 				"error":   fmt.Sprintf("'%s' is not a Nexus-managed WSL2 distribution. Use --force to remove anyway.", distroName),
 				"managed": false,
 			})
@@ -1685,7 +1685,7 @@ func runWSLRemove(cmd *cobra.Command, args []string) error {
 
 	if err := wslImporter.Remove(ctx, distroName, forceRemove); err != nil {
 		if outputJSON {
-			jsonOutput(map[string]interface{}{"error": err.Error()})
+			_ = jsonOutput(map[string]interface{}{"error": err.Error()})
 		} else {
 			fmt.Printf("\n  ⛔ Failed to remove '%s': %v\n\n", distroName, err)
 		}
@@ -1756,7 +1756,7 @@ func runWSLEnter(cmd *cobra.Command, args []string) error {
 	if !wsl.IsImportAvailable() {
 		errMsg := "WSL2 is only available on Windows. On Linux, you're already running natively"
 		if outputJSON {
-			jsonOutput(map[string]interface{}{"error": errMsg, "available": false})
+			_ = jsonOutput(map[string]interface{}{"error": errMsg, "available": false})
 		} else {
 			fmt.Printf("\n  ⛔ %s\n\n", errMsg)
 		}
@@ -1771,7 +1771,7 @@ func runWSLEnter(cmd *cobra.Command, args []string) error {
 
 	if err := wsl.ValidateDistroName(distroName); err != nil {
 		if outputJSON {
-			jsonOutput(map[string]interface{}{"error": fmt.Sprintf("invalid distro name: %v", err)})
+			_ = jsonOutput(map[string]interface{}{"error": fmt.Sprintf("invalid distro name: %v", err)})
 		} else {
 			fmt.Printf("\n  ⛔ Invalid distro name: %v\n\n", err)
 		}
@@ -1801,7 +1801,7 @@ func runWSLEnter(cmd *cobra.Command, args []string) error {
 	output, err := engine.SanitizeAndExecute(ctx, "wsl", "-d", distroName)
 	if err != nil {
 		if outputJSON {
-			jsonOutput(map[string]interface{}{"error": err.Error()})
+			_ = jsonOutput(map[string]interface{}{"error": err.Error()})
 		} else {
 			fmt.Printf("\n  ⛔ Failed to enter distribution '%s': %v\n\n", distroName, err)
 		}

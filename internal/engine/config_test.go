@@ -90,8 +90,8 @@ func TestFormatConfig_Defaults(t *testing.T) {
 func TestInitConfig_CreatesDefaultConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+	_ = os.Setenv("HOME", tmpDir)                      //nolint:errcheck // test setup
+	defer func() { _ = os.Setenv("HOME", origHome) }() //nolint:errcheck // test cleanup
 
 	// Reset viper state
 	viper.Reset()
@@ -111,8 +111,8 @@ func TestInitConfig_CreatesDefaultConfig(t *testing.T) {
 func TestInitConfig_ReadsExistingConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+	_ = os.Setenv("HOME", tmpDir)                      //nolint:errcheck // test setup
+	defer func() { _ = os.Setenv("HOME", origHome) }() //nolint:errcheck // test cleanup
 
 	// Create nexus config directory and file
 	nexusDir := filepath.Join(tmpDir, ".nexus")
@@ -158,8 +158,8 @@ verbose: true
 func TestInitConfig_DefaultsWhenNoConfigFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+	_ = os.Setenv("HOME", tmpDir)                      //nolint:errcheck // test setup
+	defer func() { _ = os.Setenv("HOME", origHome) }() //nolint:errcheck // test cleanup
 
 	viper.Reset()
 

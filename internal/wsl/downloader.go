@@ -53,13 +53,13 @@ type DownloadProgress func(totalBytes, downloadedBytes int64, percent float64)
 //
 // But enterprise-grade means we don't just call http.Get(). This downloader
 // enforces:
-//   1. HTTPS-only (no plaintext HTTP)
-//   2. SHA256 integrity verification (constant-time comparison)
-//   3. SSRF protection (reject private IP ranges)
-//   4. Atomic file writes (temp file + rename)
-//   5. Progress reporting (for CLI and future HUD)
-//   6. Content-Length validation (fail fast on size mismatch)
-//   7. Context-based timeout (don't hang forever)
+//  1. HTTPS-only (no plaintext HTTP)
+//  2. SHA256 integrity verification (constant-time comparison)
+//  3. SSRF protection (reject private IP ranges)
+//  4. Atomic file writes (temp file + rename)
+//  5. Progress reporting (for CLI and future HUD)
+//  6. Content-Length validation (fail fast on size mismatch)
+//  7. Context-based timeout (don't hang forever)
 type Downloader struct {
 	// client is the HTTP client used for downloads.
 	// Configured with sensible timeouts and SSRF-safe transport.

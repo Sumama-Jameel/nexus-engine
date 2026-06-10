@@ -15,10 +15,10 @@
 package manifest
 
 import (
-        "embed"
-        "io/fs"
-        "path/filepath"
-        "strings"
+	"embed"
+	"io/fs"
+	"path/filepath"
+	"strings"
 )
 
 //go:embed defaults/*.yaml
@@ -35,42 +35,42 @@ var defaultsFS embed.FS
 // The embedded profiles are located in the defaults/ subdirectory and are
 // read at compile time. Only files with the .yaml extension are included.
 func BundledDefaults() map[string]string {
-        defaults := make(map[string]string)
+	defaults := make(map[string]string)
 
-        entries, err := fs.ReadDir(defaultsFS, "defaults")
-        if err != nil {
-                return defaults
-        }
+	entries, err := fs.ReadDir(defaultsFS, "defaults")
+	if err != nil {
+		return defaults
+	}
 
-        for _, entry := range entries {
-                if entry.IsDir() {
-                        continue
-                }
-                name := entry.Name()
-                if !strings.HasSuffix(name, ".yaml") {
-                        continue
-                }
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".yaml") {
+			continue
+		}
 
-                profileName := strings.TrimSuffix(name, ".yaml")
-                data, err := defaultsFS.ReadFile("defaults/" + name)
-                if err != nil {
-                        continue
-                }
+		profileName := strings.TrimSuffix(name, ".yaml")
+		data, err := defaultsFS.ReadFile("defaults/" + name)
+		if err != nil {
+			continue
+		}
 
-                defaults[profileName] = string(data)
-        }
+		defaults[profileName] = string(data)
+	}
 
-        return defaults
+	return defaults
 }
 
 // DefaultRemoteBaseURL returns the configured remote base URL for profile
 // fetching. By default, this returns DefaultRemoteURL. The URL can be
 // overridden via Viper configuration to point to a custom profile repository.
 func DefaultRemoteBaseURL() string {
-        return DefaultRemoteURL
+	return DefaultRemoteURL
 }
 
 func init() {
-        // Ensure filepath functions work with embedded FS paths
-        _ = filepath.Join("defaults", "base-dev.yaml")
+	// Ensure filepath functions work with embedded FS paths
+	_ = filepath.Join("defaults", "base-dev.yaml")
 }

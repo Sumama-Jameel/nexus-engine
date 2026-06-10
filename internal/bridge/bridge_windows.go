@@ -434,9 +434,9 @@ func detectWindowsPackageManager(ctx context.Context) string {
 		bin  string
 		name string
 	}{
-		{"winget", "winget"},  // Official Windows Package Manager
-		{"scoop", "scoop"},    // Community, portable
-		{"choco", "choco"},    // Community, PowerShell-based
+		{"winget", "winget"}, // Official Windows Package Manager
+		{"scoop", "scoop"},   // Community, portable
+		{"choco", "choco"},   // Community, PowerShell-based
 	}
 
 	for _, pm := range managers {

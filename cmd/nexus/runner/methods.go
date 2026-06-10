@@ -88,12 +88,12 @@ func (d *Dependencies) RemovePackages(ctx context.Context, packages []string) (*
 	if d.DryRun {
 		for _, pkg := range result.ToRemove {
 			result.PackageResults = append(result.PackageResults, installer.PackageResult{
-					Package:    pkg,
-					Action:     "remove",
-					Success:    true,
-					Skipped:    true,
-					SkipReason: "dry-run",
-				})
+				Package:    pkg,
+				Action:     "remove",
+				Success:    true,
+				Skipped:    true,
+				SkipReason: "dry-run",
+			})
 		}
 		return result, nil
 	}

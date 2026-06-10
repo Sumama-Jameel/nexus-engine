@@ -73,7 +73,7 @@ func defaultExecFunc(ctx context.Context, command string, args ...string) (strin
 //
 // Example:
 //
-//      bridge.SetExecFunc(engine.SanitizeAndExecute)
+//	bridge.SetExecFunc(engine.SanitizeAndExecute)
 func SetExecFunc(fn ExecFunc) {
 	if fn != nil {
 		bridgeExecFn = fn
@@ -86,12 +86,13 @@ func SetExecFunc(fn ExecFunc) {
 //
 // Per the Nexus Protocol:
 // "Probe: Go queries the OS using runtime.GOOS and system calls
-//  to detect if it's running natively on Linux or inside WSL2."
+//
+//	to detect if it's running natively on Linux or inside WSL2."
 type EnvironmentInfo struct {
-	Blockers       []string        `json:"blockers"`
-	WindowsVersion string          `json:"windows_version,omitempty"`
-	Distro         string          `json:"distro"`
-	PackageManager string          `json:"package_manager"`
+	Blockers       []string `json:"blockers"`
+	WindowsVersion string   `json:"windows_version,omitempty"`
+	Distro         string   `json:"distro"`
+	PackageManager string   `json:"package_manager"`
 	// WSL2Status contains the full WSL2 detection report when running
 	// on Windows. On Linux, this field is nil — use IsWSL2 instead
 	// to check if running inside WSL2.

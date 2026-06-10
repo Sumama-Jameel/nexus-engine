@@ -251,8 +251,8 @@ func TestValidateDownloadURL(t *testing.T) {
 
 func TestPlaceholderHashDetection(t *testing.T) {
 	tests := []struct {
-		name         string
-		sha256       string
+		name          string
+		sha256        string
 		isPlaceholder bool
 	}{
 		{name: "alpine placeholder", sha256: "placeholder-alpine-sha256-will-be-replaced-with-real-hash", isPlaceholder: true},

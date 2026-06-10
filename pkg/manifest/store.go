@@ -15,17 +15,17 @@
 package manifest
 
 import (
-        "crypto/sha256"
-        "encoding/json"
-        "fmt"
-        "io"
-        "net/http"
-        "net/url"
-        "os"
-        "path/filepath"
-        "sort"
-        "strings"
-        "time"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"time"
 )
 
 // ProfileSource indicates where a profile came from. It is one of
@@ -35,19 +35,19 @@ import (
 type ProfileSource string
 
 const (
-        // SourceBundled indicates a profile that ships with the Nexus binary.
-        // Bundled profiles are embedded via go:embed and extracted on first run.
-        // They cannot be removed without the --force flag.
-        SourceBundled ProfileSource = "bundled"
+	// SourceBundled indicates a profile that ships with the Nexus binary.
+	// Bundled profiles are embedded via go:embed and extracted on first run.
+	// They cannot be removed without the --force flag.
+	SourceBundled ProfileSource = "bundled"
 
-        // SourceLocal indicates a user-created profile stored on the local disk.
-        // Local profiles are created via `nexus profile create` or manual editing.
-        SourceLocal ProfileSource = "local"
+	// SourceLocal indicates a user-created profile stored on the local disk.
+	// Local profiles are created via `nexus profile create` or manual editing.
+	SourceLocal ProfileSource = "local"
 
-        // SourceRemote indicates a profile fetched from a remote GitHub repository.
-        // Remote profiles are downloaded via FetchProfile and validated against
-        // the JSON Schema before being written to disk.
-        SourceRemote ProfileSource = "remote"
+	// SourceRemote indicates a profile fetched from a remote GitHub repository.
+	// Remote profiles are downloaded via FetchProfile and validated against
+	// the JSON Schema before being written to disk.
+	SourceRemote ProfileSource = "remote"
 )
 
 // ProfileMeta tracks provenance and integrity for a single profile.
@@ -56,12 +56,12 @@ const (
 // added and last applied. The SHA256 field is used by VerifyIntegrity to
 // detect unauthorized modifications on every profile load.
 type ProfileMeta struct {
-        LastApplied *time.Time    `json:"last_applied,omitempty"`
-        DateAdded   time.Time     `json:"date_added"`
-        Name        string        `json:"name"`
-        Version     string        `json:"version"`
-        SHA256      string        `json:"sha256"`
-        Source      ProfileSource `json:"source"`
+	LastApplied *time.Time    `json:"last_applied,omitempty"`
+	DateAdded   time.Time     `json:"date_added"`
+	Name        string        `json:"name"`
+	Version     string        `json:"version"`
+	SHA256      string        `json:"sha256"`
+	Source      ProfileSource `json:"source"`
 }
 
 // ProfileRegistry is the on-disk index file (registry.json) for the local
@@ -70,16 +70,16 @@ type ProfileMeta struct {
 // The registry is persisted atomically (temp file + rename) to prevent
 // corruption from partial writes.
 type ProfileRegistry struct {
-        Profiles map[string]ProfileMeta `json:"profiles"`
-        Version  int                    `json:"version"`
+	Profiles map[string]ProfileMeta `json:"profiles"`
+	Version  int                    `json:"version"`
 }
 
 // ProfileStore manages the local profile directory at ~/.nexus/profiles/.
 // Per the V3 plan: "Separation of data and code. The binary ships with
 // defaults (embedded), but the user's profiles live in their home directory."
 type ProfileStore struct {
-        dir      string
-        registry *ProfileRegistry
+	dir      string
+	registry *ProfileRegistry
 }
 
 // NewProfileStore creates or loads the profile store at ~/.nexus/profiles/.
@@ -88,35 +88,35 @@ type ProfileStore struct {
 // The caller should call Initialize after NewProfileStore to seed bundled
 // defaults into the store.
 func NewProfileStore() (*ProfileStore, error) {
-        homeDir, err := os.UserHomeDir()
-        if err != nil {
-                return nil, fmt.Errorf("failed to determine home directory: %w", err)
-        }
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine home directory: %w", err)
+	}
 
-        dir := filepath.Join(homeDir, ".nexus", "profiles")
-        if err := os.MkdirAll(dir, 0755); err != nil {
-                return nil, fmt.Errorf("failed to create profiles directory: %w", err)
-        }
+	dir := filepath.Join(homeDir, ".nexus", "profiles")
+	if err := os.MkdirAll(dir, 0755); err != nil { //nolint:gosec // standard user directory permissions
+		return nil, fmt.Errorf("failed to create profiles directory: %w", err)
+	}
 
-        store := &ProfileStore{dir: dir}
+	store := &ProfileStore{dir: dir}
 
-        // Load or create registry
-        registryPath := filepath.Join(dir, "registry.json")
-        if data, err := os.ReadFile(registryPath); err == nil {
-                var reg ProfileRegistry
-                if err := json.Unmarshal(data, &reg); err == nil {
-                        store.registry = &reg
-                        return store, nil
-                }
-        }
+	// Load or create registry
+	registryPath := filepath.Join(dir, "registry.json")
+	if data, err := os.ReadFile(registryPath); err == nil { //nolint:gosec // path built from trusted base dir
+		var reg ProfileRegistry
+		if err := json.Unmarshal(data, &reg); err == nil {
+			store.registry = &reg
+			return store, nil
+		}
+	}
 
-        // Fresh registry
-        store.registry = &ProfileRegistry{
-                Version:  1,
-                Profiles: make(map[string]ProfileMeta),
-        }
+	// Fresh registry
+	store.registry = &ProfileRegistry{
+		Version:  1,
+		Profiles: make(map[string]ProfileMeta),
+	}
 
-        return store, nil
+	return store, nil
 }
 
 // Initialize seeds the profile store with bundled default profiles.
@@ -126,52 +126,52 @@ func NewProfileStore() (*ProfileStore, error) {
 // is added to the registry if missing. This is called on first run to ensure
 // the user has access to the factory-default profiles.
 func (s *ProfileStore) Initialize(bundledProfiles map[string]string) error {
-        for name, content := range bundledProfiles {
-                path := filepath.Join(s.dir, name+".yaml")
+	for name, content := range bundledProfiles {
+		path := filepath.Join(s.dir, name+".yaml")
 
-                // Parse to extract version for registry metadata
-                var version string
-                if parsed, err := ParseBytes([]byte(content)); err == nil {
-                        version = parsed.Version
-                }
+		// Parse to extract version for registry metadata
+		var version string
+		if parsed, err := ParseBytes([]byte(content)); err == nil {
+			version = parsed.Version
+		}
 
-                // Only write if not already present
-                if _, err := os.Stat(path); err != nil {
-                        if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-                                return fmt.Errorf("failed to write bundled profile '%s': %w", name, err)
-                        }
+		// Only write if not already present
+		if _, err := os.Stat(path); err != nil {
+			if err := os.WriteFile(path, []byte(content), 0644); err != nil { //nolint:gosec // standard config file permissions
+				return fmt.Errorf("failed to write bundled profile '%s': %w", name, err)
+			}
 
-                        hash := computeSHA256([]byte(content))
-                        s.registry.Profiles[name] = ProfileMeta{
-                                Name:      name,
-                                Version:   version,
-                                Source:    SourceBundled,
-                                SHA256:    hash,
-                                DateAdded: time.Now().UTC(),
-                        }
-                } else {
-                        // Verify existing file matches expected hash
-                        if _, exists := s.registry.Profiles[name]; !exists {
-                                data, err := os.ReadFile(path)
-                                if err == nil {
-                                        // Parse existing file for version
-                                        var existingVersion string
-                                        if parsed, parseErr := ParseBytes(data); parseErr == nil {
-                                                existingVersion = parsed.Version
-                                        }
-                                        s.registry.Profiles[name] = ProfileMeta{
-                                                Name:      name,
-                                                Version:   existingVersion,
-                                                Source:    SourceBundled,
-                                                SHA256:    computeSHA256(data),
-                                                DateAdded: time.Now().UTC(),
-                                        }
-                                }
-                        }
-                }
-        }
+			hash := computeSHA256([]byte(content))
+			s.registry.Profiles[name] = ProfileMeta{
+				Name:      name,
+				Version:   version,
+				Source:    SourceBundled,
+				SHA256:    hash,
+				DateAdded: time.Now().UTC(),
+			}
+		} else {
+			// Verify existing file matches expected hash
+			if _, exists := s.registry.Profiles[name]; !exists {
+				data, err := os.ReadFile(path) //nolint:gosec // path built from trusted base dir
+				if err == nil {
+					// Parse existing file for version
+					var existingVersion string
+					if parsed, parseErr := ParseBytes(data); parseErr == nil {
+						existingVersion = parsed.Version
+					}
+					s.registry.Profiles[name] = ProfileMeta{
+						Name:      name,
+						Version:   existingVersion,
+						Source:    SourceBundled,
+						SHA256:    computeSHA256(data),
+						DateAdded: time.Now().UTC(),
+					}
+				}
+			}
+		}
+	}
 
-        return s.saveRegistry()
+	return s.saveRegistry()
 }
 
 // LoadProfile loads and returns a named profile from the store directory.
@@ -179,17 +179,17 @@ func (s *ProfileStore) Initialize(bundledProfiles map[string]string) error {
 // directly in ResolveExtends. Before parsing, VerifyIntegrity is called to
 // detect any unauthorized modifications since the profile was registered.
 func (s *ProfileStore) LoadProfile(name string) (*NexusProfile, error) {
-        path := s.ProfilePath(name)
-        if _, err := os.Stat(path); err != nil {
-                return nil, fmt.Errorf("profile '%s' not found in store", name)
-        }
+	path := s.ProfilePath(name)
+	if _, err := os.Stat(path); err != nil {
+		return nil, fmt.Errorf("profile '%s' not found in store", name)
+	}
 
-        // Integrity check before loading
-        if err := s.VerifyIntegrity(name); err != nil {
-                return nil, fmt.Errorf("INTEGRITY CHECK FAILED for profile '%s': %w", name, err)
-        }
+	// Integrity check before loading
+	if err := s.VerifyIntegrity(name); err != nil {
+		return nil, fmt.Errorf("INTEGRITY CHECK FAILED for profile '%s': %w", name, err)
+	}
 
-        return Parse(path)
+	return Parse(path)
 }
 
 // LoadProfileWithExtends loads a profile and fully resolves its extends chain.
@@ -197,22 +197,22 @@ func (s *ProfileStore) LoadProfile(name string) (*NexusProfile, error) {
 // profile has no extends field, it is returned as-is. If it extends another
 // profile, ResolveExtends is called with cycle detection and depth limiting.
 func (s *ProfileStore) LoadProfileWithExtends(name string) (*NexusProfile, error) {
-        profile, err := s.LoadProfile(name)
-        if err != nil {
-                return nil, err
-        }
+	profile, err := s.LoadProfile(name)
+	if err != nil {
+		return nil, err
+	}
 
-        if profile.Extends == "" {
-                return profile, nil
-        }
+	if profile.Extends == "" {
+		return profile, nil
+	}
 
-        // Resolve extends chain with cycle detection
-        resolved, err := ResolveExtends(profile, s, make(map[string]bool), 0)
-        if err != nil {
-                return nil, fmt.Errorf("extends resolution failed for '%s': %w", name, err)
-        }
+	// Resolve extends chain with cycle detection
+	resolved, err := ResolveExtends(profile, s, make(map[string]bool), 0)
+	if err != nil {
+		return nil, fmt.Errorf("extends resolution failed for '%s': %w", name, err)
+	}
 
-        return resolved, nil
+	return resolved, nil
 }
 
 // SaveProfile writes a profile YAML to the store directory and registers its
@@ -220,26 +220,26 @@ func (s *ProfileStore) LoadProfileWithExtends(name string) (*NexusProfile, error
 // if validation fails, the write is refused. The SHA256 hash of the content
 // is recorded for future integrity verification via VerifyIntegrity.
 func (s *ProfileStore) SaveProfile(name string, content []byte, source ProfileSource) error {
-        // Validate before saving
-        profile, err := ParseBytes(content)
-        if err != nil {
-                return fmt.Errorf("profile validation failed, refusing to save: %w", err)
-        }
+	// Validate before saving
+	profile, err := ParseBytes(content)
+	if err != nil {
+		return fmt.Errorf("profile validation failed, refusing to save: %w", err)
+	}
 
-        path := s.ProfilePath(name)
-        if err := os.WriteFile(path, content, 0644); err != nil {
-                return fmt.Errorf("failed to write profile: %w", err)
-        }
+	path := s.ProfilePath(name)
+	if err := os.WriteFile(path, content, 0644); err != nil { //nolint:gosec // standard config file permissions
+		return fmt.Errorf("failed to write profile: %w", err)
+	}
 
-        s.registry.Profiles[name] = ProfileMeta{
-                Name:      name,
-                Version:   profile.Version,
-                Source:    source,
-                SHA256:    computeSHA256(content),
-                DateAdded: time.Now().UTC(),
-        }
+	s.registry.Profiles[name] = ProfileMeta{
+		Name:      name,
+		Version:   profile.Version,
+		Source:    source,
+		SHA256:    computeSHA256(content),
+		DateAdded: time.Now().UTC(),
+	}
 
-        return s.saveRegistry()
+	return s.saveRegistry()
 }
 
 // RemoveProfile removes a profile from the store directory and registry.
@@ -247,22 +247,22 @@ func (s *ProfileStore) SaveProfile(name string, content []byte, source ProfileSo
 // preventing accidental removal of factory defaults. Local and remote profiles
 // can be removed without force.
 func (s *ProfileStore) RemoveProfile(name string, force bool) error {
-        meta, exists := s.registry.Profiles[name]
-        if !exists {
-                return fmt.Errorf("profile '%s' not found in registry", name)
-        }
+	meta, exists := s.registry.Profiles[name]
+	if !exists {
+		return fmt.Errorf("profile '%s' not found in registry", name)
+	}
 
-        if meta.Source == SourceBundled && !force {
-                return fmt.Errorf("cannot remove bundled profile '%s' without --force", name)
-        }
+	if meta.Source == SourceBundled && !force {
+		return fmt.Errorf("cannot remove bundled profile '%s' without --force", name)
+	}
 
-        path := s.ProfilePath(name)
-        if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-                return fmt.Errorf("failed to remove profile file: %w", err)
-        }
+	path := s.ProfilePath(name)
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to remove profile file: %w", err)
+	}
 
-        delete(s.registry.Profiles, name)
-        return s.saveRegistry()
+	delete(s.registry.Profiles, name)
+	return s.saveRegistry()
 }
 
 // VerifyIntegrity recomputes the SHA256 hash of a profile file and compares
@@ -281,24 +281,24 @@ func (s *ProfileStore) RemoveProfile(name string, force bool) error {
 //     ensuring that even transient modifications are caught before the profile
 //     is parsed and its contents are trusted by the engine.
 func (s *ProfileStore) VerifyIntegrity(name string) error {
-        meta, exists := s.registry.Profiles[name]
-        if !exists {
-                // Not in registry — not yet tracked. Allow load but warn.
-                return nil
-        }
+	meta, exists := s.registry.Profiles[name]
+	if !exists {
+		// Not in registry — not yet tracked. Allow load but warn.
+		return nil
+	}
 
-        path := s.ProfilePath(name)
-        data, err := os.ReadFile(path)
-        if err != nil {
-                return fmt.Errorf("cannot read profile file: %w", err)
-        }
+	path := s.ProfilePath(name)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("cannot read profile file: %w", err)
+	}
 
-        currentHash := computeSHA256(data)
-        if currentHash != meta.SHA256 {
-                return fmt.Errorf("SHA256 mismatch: expected %s, got %s — profile may have been tampered with", meta.SHA256[:16], currentHash[:16])
-        }
+	currentHash := computeSHA256(data)
+	if currentHash != meta.SHA256 {
+		return fmt.Errorf("SHA256 mismatch: expected %s, got %s — profile may have been tampered with", meta.SHA256[:16], currentHash[:16])
+	}
 
-        return nil
+	return nil
 }
 
 // RecordApplied updates the LastApplied timestamp for a profile in the
@@ -306,51 +306,51 @@ func (s *ProfileStore) VerifyIntegrity(name string) error {
 // execution to track when each profile was last used. The registry is
 // persisted immediately after the update.
 func (s *ProfileStore) RecordApplied(name string) error {
-        meta, exists := s.registry.Profiles[name]
-        if !exists {
-                return fmt.Errorf("profile '%s' not in registry", name)
-        }
+	meta, exists := s.registry.Profiles[name]
+	if !exists {
+		return fmt.Errorf("profile '%s' not in registry", name)
+	}
 
-        now := time.Now().UTC()
-        meta.LastApplied = &now
-        s.registry.Profiles[name] = meta
-        return s.saveRegistry()
+	now := time.Now().UTC()
+	meta.LastApplied = &now
+	s.registry.Profiles[name] = meta
+	return s.saveRegistry()
 }
 
 // ListProfiles returns all registered profiles sorted alphabetically by name.
 func (s *ProfileStore) ListProfiles() []ProfileMeta {
-        var profiles []ProfileMeta
-        for _, meta := range s.registry.Profiles {
-                profiles = append(profiles, meta)
-        }
-        sort.Slice(profiles, func(i, j int) bool {
-                return profiles[i].Name < profiles[j].Name
-        })
-        return profiles
+	var profiles []ProfileMeta
+	for _, meta := range s.registry.Profiles {
+		profiles = append(profiles, meta)
+	}
+	sort.Slice(profiles, func(i, j int) bool {
+		return profiles[i].Name < profiles[j].Name
+	})
+	return profiles
 }
 
 // GetMeta returns the ProfileMeta for a named profile. The second return
 // value indicates whether the profile exists in the registry.
 func (s *ProfileStore) GetMeta(name string) (ProfileMeta, bool) {
-        meta, exists := s.registry.Profiles[name]
-        return meta, exists
+	meta, exists := s.registry.Profiles[name]
+	return meta, exists
 }
 
 // ProfilePath returns the filesystem path for a named profile in the store
 // directory. The path is of the form ~/.nexus/profiles/<name>.yaml.
 func (s *ProfileStore) ProfilePath(name string) string {
-        return filepath.Join(s.dir, name+".yaml")
+	return filepath.Join(s.dir, name+".yaml")
 }
 
 // ProfileContent reads the raw YAML content of a named profile from disk.
 // Returns the content as a string, or an error if the file cannot be read.
 func (s *ProfileStore) ProfileContent(name string) (string, error) {
-        path := s.ProfilePath(name)
-        data, err := os.ReadFile(path)
-        if err != nil {
-                return "", err
-        }
-        return string(data), nil
+	path := s.ProfilePath(name)
+	data, err := os.ReadFile(path) //nolint:gosec // path built from trusted base dir
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 // defaultHTTPClient is the HTTP client used by FetchProfile. It is a
@@ -381,9 +381,9 @@ var defaultHTTPClient = &http.Client{Timeout: 30 * time.Second}
 // To add a new approved host, modify this map and rebuild the binary.
 // There is no runtime configuration for host whitelisting — this is intentional.
 var AllowedRemoteHosts = map[string]bool{
-        "raw.githubusercontent.com": true,
-        "github.com":               true,
-        "gist.githubusercontent.com": true,
+	"raw.githubusercontent.com":  true,
+	"github.com":                 true,
+	"gist.githubusercontent.com": true,
 }
 
 // FetchProfile downloads a profile from a remote GitHub repository and stores
@@ -404,50 +404,50 @@ var AllowedRemoteHosts = map[string]bool{
 //   - Integrity Recording: The SHA256 hash of the validated content is recorded
 //     in the registry for future integrity checks via VerifyIntegrity.
 func (s *ProfileStore) FetchProfile(name string, remoteURL string) error {
-        // SSRF Protection: Validate the remote URL against allowed hosts
-        if err := validateRemoteURL(remoteURL); err != nil {
-                return fmt.Errorf("SECURITY: remote URL rejected: %w", err)
-        }
+	// SSRF Protection: Validate the remote URL against allowed hosts
+	if err := validateRemoteURL(remoteURL); err != nil {
+		return fmt.Errorf("SECURITY: remote URL rejected: %w", err)
+	}
 
-        // Construct URL from validated components only
-        fetchURL := fmt.Sprintf("%s/%s.yaml", remoteURL, name)
+	// Construct URL from validated components only
+	fetchURL := fmt.Sprintf("%s/%s.yaml", remoteURL, name)
 
-        resp, err := defaultHTTPClient.Get(fetchURL)
-        if err != nil {
-                return fmt.Errorf("failed to fetch profile '%s': %w", name, err)
-        }
+	resp, err := defaultHTTPClient.Get(fetchURL)
+	if err != nil {
+		return fmt.Errorf("failed to fetch profile '%s': %w", name, err)
+	}
 	defer func() { _ = resp.Body.Close() }()
 
-        if resp.StatusCode != http.StatusOK {
-                return fmt.Errorf("remote returned HTTP %d for profile '%s'", resp.StatusCode, name)
-        }
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("remote returned HTTP %d for profile '%s'", resp.StatusCode, name)
+	}
 
-        // Size limit: 1MB max. A profile should NEVER be this large.
-        // This prevents memory exhaustion attacks from compromised repos.
-        limitedReader := io.LimitReader(resp.Body, 1*1024*1024)
-        data, err := io.ReadAll(limitedReader)
-        if err != nil {
-                return fmt.Errorf("failed to read profile response: %w", err)
-        }
+	// Size limit: 1MB max. A profile should NEVER be this large.
+	// This prevents memory exhaustion attacks from compromised repos.
+	limitedReader := io.LimitReader(resp.Body, 1*1024*1024)
+	data, err := io.ReadAll(limitedReader)
+	if err != nil {
+		return fmt.Errorf("failed to read profile response: %w", err)
+	}
 
-        // Validate against schema BEFORE writing to disk.
-        // A malicious profile must NEVER touch the filesystem.
-        parsed, err := ParseBytes(data)
-        if err != nil {
-                return fmt.Errorf("remote profile '%s' failed validation, refusing to save: %w", name, err)
-        }
+	// Validate against schema BEFORE writing to disk.
+	// A malicious profile must NEVER touch the filesystem.
+	parsed, err := ParseBytes(data)
+	if err != nil {
+		return fmt.Errorf("remote profile '%s' failed validation, refusing to save: %w", name, err)
+	}
 
-        // Version drift detection: if the profile already exists locally,
-        // warn if the remote version differs from the local version.
-        if existingMeta, exists := s.registry.Profiles[name]; exists {
-                if existingMeta.Version != parsed.Version && existingMeta.Source == SourceRemote {
-                        // Non-fatal warning: the user explicitly asked to fetch,
-                        // so we proceed. But we log the drift for auditability.
-                        _ = fmt.Sprintf("version drift: local=%s remote=%s", existingMeta.Version, parsed.Version)
-                }
-        }
+	// Version drift detection: if the profile already exists locally,
+	// warn if the remote version differs from the local version.
+	if existingMeta, exists := s.registry.Profiles[name]; exists {
+		if existingMeta.Version != parsed.Version && existingMeta.Source == SourceRemote {
+			// Non-fatal warning: the user explicitly asked to fetch,
+			// so we proceed. But we log the drift for auditability.
+			_ = fmt.Sprintf("version drift: local=%s remote=%s", existingMeta.Version, parsed.Version)
+		}
+	}
 
-        return s.SaveProfile(name, data, SourceRemote)
+	return s.SaveProfile(name, data, SourceRemote)
 }
 
 // validateRemoteURL checks that a remote URL is allowed for profile fetching.
@@ -455,81 +455,81 @@ func (s *ProfileStore) FetchProfile(name string, remoteURL string) error {
 // This prevents SSRF attacks where a malicious URL could be used to
 // scan internal networks or exfiltrate data.
 func validateRemoteURL(remoteURL string) error {
-        parsed, err := url.Parse(remoteURL)
-        if err != nil {
-                return fmt.Errorf("invalid URL: %w", err)
-        }
+	parsed, err := url.Parse(remoteURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
 
-        // Enforce HTTPS
-        if parsed.Scheme != "https" {
-                return fmt.Errorf("only HTTPS is allowed, got '%s'", parsed.Scheme)
-        }
+	// Enforce HTTPS
+	if parsed.Scheme != "https" {
+		return fmt.Errorf("only HTTPS is allowed, got '%s'", parsed.Scheme)
+	}
 
-        // Check host against whitelist
-        host := parsed.Hostname()
-        if !AllowedRemoteHosts[host] {
-                allowed := make([]string, 0, len(AllowedRemoteHosts))
-                for h := range AllowedRemoteHosts {
-                        allowed = append(allowed, h)
-                }
-                return fmt.Errorf("host '%s' is not in the allowed list: %v", host, allowed)
-        }
+	// Check host against whitelist
+	host := parsed.Hostname()
+	if !AllowedRemoteHosts[host] {
+		allowed := make([]string, 0, len(AllowedRemoteHosts))
+		for h := range AllowedRemoteHosts {
+			allowed = append(allowed, h)
+		}
+		return fmt.Errorf("host '%s' is not in the allowed list: %v", host, allowed)
+	}
 
-        // Reject URLs with userinfo (user:pass@host)
-        if parsed.User != nil {
-                return fmt.Errorf("URLs with userinfo are not allowed")
-        }
+	// Reject URLs with userinfo (user:pass@host)
+	if parsed.User != nil {
+		return fmt.Errorf("URLs with userinfo are not allowed")
+	}
 
-        // Reject URLs with query parameters or fragments
-        if parsed.RawQuery != "" || parsed.Fragment != "" {
-                return fmt.Errorf("URLs with query parameters or fragments are not allowed")
-        }
+	// Reject URLs with query parameters or fragments
+	if parsed.RawQuery != "" || parsed.Fragment != "" {
+		return fmt.Errorf("URLs with query parameters or fragments are not allowed")
+	}
 
-        return nil
+	return nil
 }
 
 // computeSHA256 returns the hex-encoded SHA256 hash of data.
 func computeSHA256(data []byte) string {
-        hash := sha256.Sum256(data)
-        return fmt.Sprintf("%x", hash)
+	hash := sha256.Sum256(data)
+	return fmt.Sprintf("%x", hash)
 }
 
 // saveRegistry writes the registry to disk atomically.
 func (s *ProfileStore) saveRegistry() error {
-        data, err := json.MarshalIndent(s.registry, "", "  ")
-        if err != nil {
-                return fmt.Errorf("failed to marshal registry: %w", err)
-        }
+	data, err := json.MarshalIndent(s.registry, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal registry: %w", err)
+	}
 
-        tmpPath := filepath.Join(s.dir, "registry.json.tmp")
-        if err := os.WriteFile(tmpPath, data, 0644); err != nil {
-                return fmt.Errorf("failed to write registry: %w", err)
-        }
+	tmpPath := filepath.Join(s.dir, "registry.json.tmp")
+	if err := os.WriteFile(tmpPath, data, 0644); err != nil { //nolint:gosec // standard config file permissions
+		return fmt.Errorf("failed to write registry: %w", err)
+	}
 
-        if err := os.Rename(tmpPath, filepath.Join(s.dir, "registry.json")); err != nil {
-                _ = os.Remove(tmpPath)
-                return fmt.Errorf("failed to commit registry: %w", err)
-        }
+	if err := os.Rename(tmpPath, filepath.Join(s.dir, "registry.json")); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to commit registry: %w", err)
+	}
 
-        return nil
+	return nil
 }
 
 // FormatProfileMeta returns a human-readable single-line summary of a
 // ProfileMeta entry, including the name, source, version, truncated SHA256
 // hash, and last-applied timestamp. Used by the `nexus profile list` command.
 func FormatProfileMeta(meta ProfileMeta) string {
-        lastApplied := "never"
-        if meta.LastApplied != nil {
-                lastApplied = meta.LastApplied.Format("2006-01-02 15:04")
-        }
+	lastApplied := "never"
+	if meta.LastApplied != nil {
+		lastApplied = meta.LastApplied.Format("2006-01-02 15:04")
+	}
 
-        return fmt.Sprintf("  %-20s %-10s %-8s %s  %s",
-                meta.Name,
-                meta.Source,
-                meta.Version,
-                meta.SHA256[:16]+"…",
-                lastApplied,
-        )
+	return fmt.Sprintf("  %-20s %-10s %-8s %s  %s",
+		meta.Name,
+		meta.Source,
+		meta.Version,
+		meta.SHA256[:16]+"…",
+		lastApplied,
+	)
 }
 
 // DefaultRemoteURL is the default GitHub raw URL for the community profiles
@@ -544,20 +544,20 @@ const DefaultRemoteURL = "https://raw.githubusercontent.com/nexus-os/nexus-profi
 // letters, digits, or hyphens. This pattern is enforced by both the JSON
 // Schema and this Go-level check.
 func IsValidProfileName(name string) bool {
-        if len(name) == 0 {
-                return false
-        }
-        if name[0] < 'a' || name[0] > 'z' {
-                if name[0] < '0' || name[0] > '9' {
-                        return false
-                }
-        }
-        for _, c := range name {
-                if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-') {
-                        return false
-                }
-        }
-        return true
+	if len(name) == 0 {
+		return false
+	}
+	if name[0] < 'a' || name[0] > 'z' {
+		if name[0] < '0' || name[0] > '9' {
+			return false
+		}
+	}
+	for _, c := range name {
+		if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-') {
+			return false
+		}
+	}
+	return true
 }
 
 // SanitizeProfileName prevents path traversal attacks in profile names.
@@ -581,17 +581,17 @@ func IsValidProfileName(name string) bool {
 // (e.g., from a crafted remote profile URL), it cannot escape the
 // profiles directory.
 func SanitizeProfileName(name string) error {
-        if strings.Contains(name, "/") || strings.Contains(name, "\\") {
-                return fmt.Errorf("SECURITY: profile name cannot contain path separators")
-        }
-        if strings.Contains(name, "..") {
-                return fmt.Errorf("SECURITY: profile name cannot contain path traversal sequences")
-        }
-        if strings.HasPrefix(name, ".") {
-                return fmt.Errorf("SECURITY: profile name cannot start with a dot")
-        }
-        if !IsValidProfileName(name) {
-                return fmt.Errorf("profile name must match pattern ^[a-z0-9][a-z0-9-]*$")
-        }
-        return nil
+	if strings.Contains(name, "/") || strings.Contains(name, "\\") {
+		return fmt.Errorf("SECURITY: profile name cannot contain path separators")
+	}
+	if strings.Contains(name, "..") {
+		return fmt.Errorf("SECURITY: profile name cannot contain path traversal sequences")
+	}
+	if strings.HasPrefix(name, ".") {
+		return fmt.Errorf("SECURITY: profile name cannot start with a dot")
+	}
+	if !IsValidProfileName(name) {
+		return fmt.Errorf("profile name must match pattern ^[a-z0-9][a-z0-9-]*$")
+	}
+	return nil
 }

@@ -15,22 +15,22 @@
 package installer
 
 import (
-        "context"
-        "fmt"
-        "strings"
+	"context"
+	"fmt"
+	"strings"
 )
 
 // VerifyResult captures the post-installation verification outcome for a single package.
 type VerifyResult struct {
-        // Package is the name of the package that was verified.
-        Package  string `json:"package"`
-        // Status classifies the verification outcome. One of "verified",
-        // "not_found" (package manager does not report it installed), or
-        // "broken" (installed but binary check failed).
-        Status   string `json:"status"`
-        // Verified indicates whether the package passed both the package-manager
-        // installation check and the binary-level functional test.
-        Verified bool   `json:"verified"`
+	// Package is the name of the package that was verified.
+	Package string `json:"package"`
+	// Status classifies the verification outcome. One of "verified",
+	// "not_found" (package manager does not report it installed), or
+	// "broken" (installed but binary check failed).
+	Status string `json:"status"`
+	// Verified indicates whether the package passed both the package-manager
+	// installation check and the binary-level functional test.
+	Verified bool `json:"verified"`
 }
 
 // VerifyInstallation confirms each package is actually functional after install.
@@ -43,33 +43,33 @@ type VerifyResult struct {
 // dependency injection, ensuring the verifier never bypasses the
 // security gate and works with ALL package managers (not just apt).
 func VerifyInstallation(ctx context.Context, pm PackageManager, packages []string, execFn ExecFunc) []VerifyResult {
-        var results []VerifyResult
+	var results []VerifyResult
 
-        for _, pkg := range packages {
-                result := VerifyResult{Package: pkg}
+	for _, pkg := range packages {
+		result := VerifyResult{Package: pkg}
 
-                // Step 1: Check if the package manager reports it as installed
-                if !pm.IsInstalled(ctx, pkg) {
-                        result.Verified = false
-                        result.Status = "not_found"
-                        results = append(results, result)
-                        continue
-                }
+		// Step 1: Check if the package manager reports it as installed
+		if !pm.IsInstalled(ctx, pkg) {
+			result.Verified = false
+			result.Status = "not_found"
+			results = append(results, result)
+			continue
+		}
 
-                // Step 2: For critical packages, verify the binary is actually callable
-                if verified := verifyBinary(ctx, execFn, pkg); !verified {
-                        result.Verified = false
-                        result.Status = "broken"
-                        results = append(results, result)
-                        continue
-                }
+		// Step 2: For critical packages, verify the binary is actually callable
+		if verified := verifyBinary(ctx, execFn, pkg); !verified {
+			result.Verified = false
+			result.Status = "broken"
+			results = append(results, result)
+			continue
+		}
 
-                result.Verified = true
-                result.Status = "verified"
-                results = append(results, result)
-        }
+		result.Verified = true
+		result.Status = "verified"
+		results = append(results, result)
+	}
 
-        return results
+	return results
 }
 
 // verifyBinary attempts to confirm the package's main binary is functional.
@@ -79,66 +79,66 @@ func VerifyInstallation(ctx context.Context, pm PackageManager, packages []strin
 // concrete PackageManager implementation. It works identically whether the
 // backend is apt, pacman, dnf, or apk.
 func verifyBinary(ctx context.Context, execFn ExecFunc, pkg string) bool {
-        // Map of packages to their verification commands
-        // Only critical packages get binary-level verification
-        verifiable := map[string][]string{
-                "git":     {"git", "--version"},
-                "curl":    {"curl", "--version"},
-                "wget":    {"wget", "--version"},
-                "vim":     {"vim", "--version"},
-                "python3": {"python3", "--version"},
-                "python":  {"python", "--version"},
-                "nodejs":  {"node", "--version"},
-                "npm":     {"npm", "--version"},
-                "zsh":     {"zsh", "--version"},
-                "htop":    {"htop", "--version"},
-                "tmux":    {"tmux", "-V"},
-                "java":    {"java", "-version"},
-                "chezmoi": {"chezmoi", "--version"},
-        }
+	// Map of packages to their verification commands
+	// Only critical packages get binary-level verification
+	verifiable := map[string][]string{
+		"git":     {"git", "--version"},
+		"curl":    {"curl", "--version"},
+		"wget":    {"wget", "--version"},
+		"vim":     {"vim", "--version"},
+		"python3": {"python3", "--version"},
+		"python":  {"python", "--version"},
+		"nodejs":  {"node", "--version"},
+		"npm":     {"npm", "--version"},
+		"zsh":     {"zsh", "--version"},
+		"htop":    {"htop", "--version"},
+		"tmux":    {"tmux", "-V"},
+		"java":    {"java", "-version"},
+		"chezmoi": {"chezmoi", "--version"},
+	}
 
-        args, known := verifiable[pkg]
-        if !known {
-                // Unknown packages: trust the package manager's IsInstalled check
-                return true
-        }
+	args, known := verifiable[pkg]
+	if !known {
+		// Unknown packages: trust the package manager's IsInstalled check
+		return true
+	}
 
-        _, err := execFn(ctx, args[0], args[1:]...)
-        if err != nil {
-                // For Java, -version outputs to stderr but returns 0
-                // SanitizeAndExecute treats stderr output as an error,
-                // but the binary IS functional if the command ran at all
-                if strings.Contains(pkg, "java") || strings.Contains(pkg, "jdk") {
-                        // If the error is just "EXEC: ... (stderr: ...)" with no real
-                        // failure, Java is functional. Check if it's a stderr-only "error"
-                        if strings.Contains(err.Error(), "stderr:") &&
-                                !strings.Contains(err.Error(), "not found") &&
-                                !strings.Contains(err.Error(), "no such file") {
-                                return true
-                        }
-                }
-                return false
-        }
+	_, err := execFn(ctx, args[0], args[1:]...)
+	if err != nil {
+		// For Java, -version outputs to stderr but returns 0
+		// SanitizeAndExecute treats stderr output as an error,
+		// but the binary IS functional if the command ran at all
+		if strings.Contains(pkg, "java") || strings.Contains(pkg, "jdk") {
+			// If the error is just "EXEC: ... (stderr: ...)" with no real
+			// failure, Java is functional. Check if it's a stderr-only "error"
+			if strings.Contains(err.Error(), "stderr:") &&
+				!strings.Contains(err.Error(), "not found") &&
+				!strings.Contains(err.Error(), "no such file") {
+				return true
+			}
+		}
+		return false
+	}
 
-        return true
+	return true
 }
 
 // FormatVerifyResults returns a human-readable summary.
 func FormatVerifyResults(results []VerifyResult) string {
-        verified := 0
-        broken := 0
-        notFound := 0
+	verified := 0
+	broken := 0
+	notFound := 0
 
-        for _, r := range results {
-                switch r.Status {
-                case "verified":
-                        verified++
-                case "broken":
-                        broken++
-                case "not_found":
-                        notFound++
-                }
-        }
+	for _, r := range results {
+		switch r.Status {
+		case "verified":
+			verified++
+		case "broken":
+			broken++
+		case "not_found":
+			notFound++
+		}
+	}
 
-        return fmt.Sprintf("  Verified: %d ✅  Broken: %d ⛔  Not Found: %d ❌", verified, broken, notFound)
+	return fmt.Sprintf("  Verified: %d ✅  Broken: %d ⛔  Not Found: %d ❌", verified, broken, notFound)
 }

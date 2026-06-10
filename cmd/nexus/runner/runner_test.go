@@ -126,7 +126,7 @@ func createTestState(t *testing.T) *engine.StateTracker {
 	t.Helper()
 	homeDir := t.TempDir()
 	statePath := filepath.Join(homeDir, ".nexus", "state.json")
-	_ = os.MkdirAll(filepath.Dir(statePath), 0755)
+	_ = os.MkdirAll(filepath.Dir(statePath), 0755) //nolint:gosec // test directory
 	_ = os.WriteFile(statePath, []byte(`{"version":1,"packages":{},"profiles_applied":[]}`), 0644)
 
 	// Use the real StateTracker but we need to point it to our temp dir

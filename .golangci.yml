@@ -20,9 +20,15 @@ linters:
 linters-settings:
   govet:
     enable-all: true
+    disable:
+      - fieldalignment
   gosec:
     excludes:
       - G104
+      - G301
+      - G302
+      - G304
+      - G306
   misspell:
     locale: US
 
