@@ -98,7 +98,7 @@ and automates a perfect developer environment.
                 Short: "Get a configuration value",
                 Args:  cobra.ExactArgs(1),
                 Run: func(cmd *cobra.Command, args []string) {
-                        _ = engine.InitConfig()
+                        _, _ = engine.InitConfig()
                         fmt.Println(viper.Get(args[0]))
                 },
         }

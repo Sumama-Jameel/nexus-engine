@@ -43,8 +43,8 @@ func mockExecFunc(responses map[string]mockResponse) ExecFunc {
 }
 
 type mockResponse struct {
-	err    error
 	output string
+	err    error
 }
 
 // simpleMockExec returns a minimal mock that always succeeds with empty output.

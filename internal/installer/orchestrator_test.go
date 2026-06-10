@@ -673,8 +673,8 @@ func TestBoolToResult(t *testing.T) {
         t.Parallel()
 
         tests := []struct {
-                expected string
                 input    bool
+                expected string
         }{
                 {true, "success"},
                 {false, "failure"},
