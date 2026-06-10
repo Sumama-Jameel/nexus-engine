@@ -60,7 +60,7 @@ func defaultExecFunc(ctx context.Context, command string, args ...string) (strin
 	if err != nil {
 		return "", err
 	}
-	return string(output), nil
+	return decodeWSLOutput(output), nil
 }
 
 // SetExecFunc configures the bridge package to route ALL command

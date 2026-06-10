@@ -16,6 +16,7 @@ package manifest
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -721,14 +722,14 @@ func TestAllowedRemoteHosts(t *testing.T) {
 		"gist.githubusercontent.com",
 	}
 	for _, host := range expected {
-		if !AllowedRemoteHosts[host] {
-			t.Errorf("host %q should be in AllowedRemoteHosts", host)
+		if !IsRemoteHostAllowed(host) {
+			t.Errorf("host %q should be in allowedRemoteHosts", host)
 		}
 	}
 
 	// Verify no extra hosts
-	if len(AllowedRemoteHosts) != len(expected) {
-		t.Errorf("expected %d allowed hosts, got %d", len(expected), len(AllowedRemoteHosts))
+	if len(GetAllowedRemoteHosts()) != len(expected) {
+		t.Errorf("expected %d allowed hosts, got %d", len(expected), len(GetAllowedRemoteHosts()))
 	}
 }
 
@@ -800,19 +801,19 @@ func setupFetchTest(t *testing.T, handler http.HandlerFunc) (*httptest.Server, f
 	host := u.Hostname()
 
 	// Save originals
-	origAllowed := AllowedRemoteHosts[host]
+	origAllowed := IsRemoteHostAllowed(host)
 	origClient := defaultHTTPClient
 
 	// Temporarily add test server host to allowed list
-	AllowedRemoteHosts[host] = true
+	AddAllowedRemoteHost(host)
 	// Use test server's client which trusts its certificate
 	defaultHTTPClient = ts.Client()
 
 	cleanup := func() {
 		if !origAllowed {
-			delete(AllowedRemoteHosts, host)
-		} else {
-			AllowedRemoteHosts[host] = origAllowed
+			allowedRemoteHostsMu.Lock()
+			delete(allowedRemoteHosts, host)
+			allowedRemoteHostsMu.Unlock()
 		}
 		defaultHTTPClient = origClient
 		ts.Close()
@@ -1025,10 +1026,13 @@ func TestProfileStore_VerifyIntegrity_NotInRegistry(t *testing.T) {
 	store, cleanup := setupTestStore(t)
 	defer cleanup()
 
-	// A profile not in the registry should return nil (not yet tracked)
+	// A profile not in the registry should return ErrUnregisteredProfile
+	// to prevent silent bypass of integrity checks
 	err := store.VerifyIntegrity("unknown-profile")
-	if err != nil {
-		t.Errorf("expected nil for untracked profile, got: %v", err)
+	if err == nil {
+		t.Error("expected error for unregistered profile, got nil")
+	} else if !errors.Is(err, ErrUnregisteredProfile) {
+		t.Errorf("expected ErrUnregisteredProfile, got: %v", err)
 	}
 }
 
@@ -1290,11 +1294,13 @@ func TestFetchProfile_ConnectionError(t *testing.T) {
 	host := u.Hostname()
 
 	// Add host to allowed list and configure client
-	origAllowed := AllowedRemoteHosts[host]
-	AllowedRemoteHosts[host] = true
+	origAllowed := IsRemoteHostAllowed(host)
+	AddAllowedRemoteHost(host)
 	defer func() {
 		if !origAllowed {
-			delete(AllowedRemoteHosts, host)
+			allowedRemoteHostsMu.Lock()
+			delete(allowedRemoteHosts, host)
+			allowedRemoteHostsMu.Unlock()
 		}
 	}()
 
@@ -1696,5 +1702,29 @@ func TestFormatProfileMeta(t *testing.T) {
 	resultNoApplied := FormatProfileMeta(metaNoApplied)
 	if !strings.Contains(resultNoApplied, "never") {
 		t.Error("FormatProfileMeta should show 'never' when LastApplied is nil")
+	}
+
+	// Test with empty SHA256 (should not panic)
+	metaEmptySHA := ProfileMeta{
+		Name:    "test",
+		Version: "1.0.0",
+		Source:  SourceLocal,
+		SHA256:  "",
+	}
+	resultEmptySHA := FormatProfileMeta(metaEmptySHA)
+	if !strings.Contains(resultEmptySHA, "test") {
+		t.Error("FormatProfileMeta should handle empty SHA256 without panic")
+	}
+
+	// Test with short SHA256 (should not panic)
+	metaShortSHA := ProfileMeta{
+		Name:    "test",
+		Version: "1.0.0",
+		Source:  SourceLocal,
+		SHA256:  "abc123",
+	}
+	resultShortSHA := FormatProfileMeta(metaShortSHA)
+	if !strings.Contains(resultShortSHA, "abc123") {
+		t.Error("FormatProfileMeta should handle short SHA256 without panic")
 	}
 }

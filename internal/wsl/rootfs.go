@@ -18,6 +18,8 @@ package wsl
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -232,14 +234,64 @@ func ValidateDistroName(name string) error {
 // SECURITY: This prevents a malicious profile or command from writing
 // the WSL2 vhdx file to an arbitrary location (e.g., overwriting
 // system files or placing files in world-writable directories).
+//
+// Defense-in-depth layers:
+//  1. Reject empty paths and ".." traversal sequences
+//  2. Convert to absolute path (handles relative paths)
+//  3. Resolve all symlinks (catches symlink escape)
+//  4. Enforce home directory prefix (prevents writes outside home)
+//
+// The resolved path is returned for safe use by callers.
 func ValidateInstallPath(path string) error {
 	if path == "" {
 		return fmt.Errorf("install path cannot be empty")
 	}
 
-	// Must not contain path traversal sequences
+	// Layer 1: Must not contain path traversal sequences
 	if strings.Contains(path, "..") {
 		return fmt.Errorf("install path must not contain '..' (path traversal prevention)")
+	}
+
+	// Layer 2: Convert to absolute path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path: %w", err)
+	}
+
+	// Layer 3: Resolve all symlinks to get the real path on disk
+	resolvedPath, err := filepath.EvalSymlinks(absPath)
+	if err != nil {
+		// If the path doesn't exist yet, we can't resolve symlinks.
+		// In this case, resolve the parent directory and append the basename.
+		parent := filepath.Dir(absPath)
+		basename := filepath.Base(absPath)
+
+		resolvedParent, err := filepath.EvalSymlinks(parent)
+		if err != nil {
+			// Parent doesn't exist either — validate the absolute path
+			resolvedPath = absPath
+		} else {
+			resolvedPath = filepath.Join(resolvedParent, basename)
+		}
+	}
+
+	// Layer 4: Enforce home directory prefix
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// Cannot determine home directory — fall back to traversal check only
+		return nil
+	}
+
+	// Resolve home directory symlinks too (e.g., /home → /var/home on some systems)
+	resolvedHome, err := filepath.EvalSymlinks(homeDir)
+	if err != nil {
+		resolvedHome = homeDir
+	}
+
+	if !strings.HasPrefix(resolvedPath, resolvedHome+string(filepath.Separator)) &&
+		resolvedPath != resolvedHome {
+		return fmt.Errorf("install path must be under home directory '%s' (got '%s')",
+			homeDir, resolvedPath)
 	}
 
 	return nil

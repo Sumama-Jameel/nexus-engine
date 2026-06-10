@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -34,7 +35,10 @@ const (
 	CommandTimeoutSec = 60
 )
 
-// AllowedCommands is the immutable whitelist of base commands that the engine is
+// allowedCommandsMu protects allowedCommands from concurrent access.
+var allowedCommandsMu sync.RWMutex
+
+// allowedCommands is the internal whitelist of base commands that the engine is
 // permitted to execute. Any command not present in this map is rejected by
 // SanitizeAndExecute before reaching the operating system.
 //
@@ -49,7 +53,7 @@ const (
 //     shell operators.
 //
 // No raw string concatenation for commands. Ever.
-var AllowedCommands = map[string]bool{
+var allowedCommands = map[string]bool{
 	"uname":     true,
 	"hostname":  true,
 	"free":      true,
@@ -93,6 +97,37 @@ var AllowedCommands = map[string]bool{
 	"systeminfo": true,
 }
 
+// GetAllowedCommands returns a copy of the allowed commands whitelist.
+// The returned map is safe for concurrent use and cannot mutate the original.
+func GetAllowedCommands() map[string]bool {
+	allowedCommandsMu.RLock()
+	defer allowedCommandsMu.RUnlock()
+
+	result := make(map[string]bool, len(allowedCommands))
+	for cmd, allowed := range allowedCommands {
+		result[cmd] = allowed
+	}
+	return result
+}
+
+// IsCommandAllowed checks if a command is in the allowed whitelist.
+// This is the preferred read-only check for callers that don't need the full map.
+func IsCommandAllowed(command string) bool {
+	allowedCommandsMu.RLock()
+	defer allowedCommandsMu.RUnlock()
+	return allowedCommands[command]
+}
+
+// AddAllowedCommand adds a command to the whitelist at runtime.
+// This is for legitimate extensions (e.g., plugin systems) that need to
+// register additional commands. All callers should prefer IsCommandAllowed
+// or GetAllowedCommands for read-only access.
+func AddAllowedCommand(command string) {
+	allowedCommandsMu.Lock()
+	defer allowedCommandsMu.Unlock()
+	allowedCommands[command] = true
+}
+
 // SanitizeAndExecute is the centralized security gate for all system calls
 // performed by the Nexus engine. It is the single point through which every
 // command must pass; no other code path in the engine executes subprocesses.
@@ -125,7 +160,7 @@ var AllowedCommands = map[string]bool{
 // timeout, or execution error.
 func SanitizeAndExecute(ctx context.Context, command string, args ...string) (string, error) {
 	// Step 1: Validate the base command against the whitelist
-	if !AllowedCommands[command] {
+	if !IsCommandAllowed(command) {
 		return "", fmt.Errorf("SECURITY: command '%s' is not in the allowed list", command)
 	}
 

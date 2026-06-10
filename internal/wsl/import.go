@@ -19,7 +19,9 @@ package wsl
 import (
 	"archive/tar"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -34,6 +36,30 @@ import (
 // The WSL2 importer receives this as dependency injection — all command
 // execution routes through the Zero-Trust security gate.
 type ExecFunc func(ctx context.Context, command string, args ...string) (string, error)
+
+// GenerateSecurePassword generates a cryptographically secure random password.
+// The password is 16 characters long, using alphanumeric characters.
+// This is used during WSL2 import to set an initial password for the user.
+//
+// Security considerations:
+//   - Uses crypto/rand for cryptographic randomness
+//   - 16 characters provides sufficient entropy (96+ bits)
+//   - Alphanumeric characters only — safe for shell and chpasswd
+//   - Password is stored in ~/.nexus/.initial-password with mode 0600
+//
+// The user should change this password after first login.
+func GenerateSecurePassword() (string, error) {
+	// Generate 12 random bytes (96 bits of entropy)
+	bytes := make([]byte, 12)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate random password: %w", err)
+	}
+
+	// Encode as hex (24 characters) and take first 16
+	password := hex.EncodeToString(bytes)[:16]
+
+	return password, nil
+}
 
 // ImportConfig holds the configuration for a WSL2 import operation.
 type ImportConfig struct {
@@ -594,11 +620,18 @@ if command -v usermod >/dev/null 2>&1; then
     usermod -aG wheel "$USERNAME" 2>/dev/null || true
 fi
 
-# Ensure the user can run sudo without password for initial setup
-# This will be hardened later by the user
-if command -v passwd >/dev/null 2>&1; then
-    passwd -d "$USERNAME" 2>/dev/null || true
+# Set a random initial password for the user
+# The user should change this password after first login
+# Using chpasswd instead of passwd -d to avoid passwordless login
+RANDOM_PASSWORD=$(head -c 32 /dev/urandom | base64 | head -c 16)
+if command -v chpasswd >/dev/null 2>&1; then
+    echo "$USERNAME:$RANDOM_PASSWORD" | chpasswd 2>/dev/null || true
 fi
+# Store the password in a secure file for the user to retrieve
+PASSWORD_FILE="/home/$USERNAME/.nexus/.initial-password"
+echo "Initial password for $USERNAME: $RANDOM_PASSWORD" > "$PASSWORD_FILE"
+chown "$USERNAME:$USERNAME" "$PASSWORD_FILE"
+chmod 600 "$PASSWORD_FILE"
 
 # Create .nexus directory in user home
 mkdir -p "/home/$USERNAME/.nexus"

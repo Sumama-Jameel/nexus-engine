@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -77,7 +78,12 @@ type ProfileRegistry struct {
 // ProfileStore manages the local profile directory at ~/.nexus/profiles/.
 // Per the V3 plan: "Separation of data and code. The binary ships with
 // defaults (embedded), but the user's profiles live in their home directory."
+//
+// All public methods are safe for concurrent use. The internal state is
+// protected by a sync.RWMutex that allows concurrent reads while serializing
+// writes to prevent race conditions.
 type ProfileStore struct {
+	mu       sync.RWMutex
 	dir      string
 	registry *ProfileRegistry
 }
@@ -126,6 +132,9 @@ func NewProfileStore() (*ProfileStore, error) {
 // is added to the registry if missing. This is called on first run to ensure
 // the user has access to the factory-default profiles.
 func (s *ProfileStore) Initialize(bundledProfiles map[string]string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	for name, content := range bundledProfiles {
 		path := filepath.Join(s.dir, name+".yaml")
 
@@ -179,7 +188,10 @@ func (s *ProfileStore) Initialize(bundledProfiles map[string]string) error {
 // directly in ResolveExtends. Before parsing, VerifyIntegrity is called to
 // detect any unauthorized modifications since the profile was registered.
 func (s *ProfileStore) LoadProfile(name string) (*NexusProfile, error) {
-	path := s.ProfilePath(name)
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	path := s.profilePathLocked(name)
 	if _, err := os.Stat(path); err != nil {
 		return nil, fmt.Errorf("profile '%s' not found in store", name)
 	}
@@ -197,6 +209,7 @@ func (s *ProfileStore) LoadProfile(name string) (*NexusProfile, error) {
 // profile has no extends field, it is returned as-is. If it extends another
 // profile, ResolveExtends is called with cycle detection and depth limiting.
 func (s *ProfileStore) LoadProfileWithExtends(name string) (*NexusProfile, error) {
+	// LoadProfile acquires its own lock, so we don't lock here
 	profile, err := s.LoadProfile(name)
 	if err != nil {
 		return nil, err
@@ -220,13 +233,16 @@ func (s *ProfileStore) LoadProfileWithExtends(name string) (*NexusProfile, error
 // if validation fails, the write is refused. The SHA256 hash of the content
 // is recorded for future integrity verification via VerifyIntegrity.
 func (s *ProfileStore) SaveProfile(name string, content []byte, source ProfileSource) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	// Validate before saving
 	profile, err := ParseBytes(content)
 	if err != nil {
 		return fmt.Errorf("profile validation failed, refusing to save: %w", err)
 	}
 
-	path := s.ProfilePath(name)
+	path := s.profilePathLocked(name)
 	if err := os.WriteFile(path, content, 0644); err != nil { //nolint:gosec // standard config file permissions
 		return fmt.Errorf("failed to write profile: %w", err)
 	}
@@ -247,6 +263,9 @@ func (s *ProfileStore) SaveProfile(name string, content []byte, source ProfileSo
 // preventing accidental removal of factory defaults. Local and remote profiles
 // can be removed without force.
 func (s *ProfileStore) RemoveProfile(name string, force bool) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	meta, exists := s.registry.Profiles[name]
 	if !exists {
 		return fmt.Errorf("profile '%s' not found in registry", name)
@@ -256,7 +275,7 @@ func (s *ProfileStore) RemoveProfile(name string, force bool) error {
 		return fmt.Errorf("cannot remove bundled profile '%s' without --force", name)
 	}
 
-	path := s.ProfilePath(name)
+	path := s.profilePathLocked(name)
 	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to remove profile file: %w", err)
 	}
@@ -264,6 +283,11 @@ func (s *ProfileStore) RemoveProfile(name string, force bool) error {
 	delete(s.registry.Profiles, name)
 	return s.saveRegistry()
 }
+
+// ErrUnregisteredProfile is returned when a profile is not found in the
+// registry. This prevents silent bypass of integrity checks by ensuring
+// callers explicitly handle unregistered profiles.
+var ErrUnregisteredProfile = fmt.Errorf("profile is not registered in the store")
 
 // VerifyIntegrity recomputes the SHA256 hash of a profile file and compares
 // it against the hash stored in the registry. Per the V3 plan: "On EVERY load,
@@ -280,14 +304,18 @@ func (s *ProfileStore) RemoveProfile(name string, force bool) error {
 //   - Race conditions: This check is performed on every LoadProfile call,
 //     ensuring that even transient modifications are caught before the profile
 //     is parsed and its contents are trusted by the engine.
+//   - Unregistered profiles: Returns ErrUnregisteredProfile for profiles not
+//     in the registry, preventing silent bypass of integrity checks.
 func (s *ProfileStore) VerifyIntegrity(name string) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	meta, exists := s.registry.Profiles[name]
 	if !exists {
-		// Not in registry — not yet tracked. Allow load but warn.
-		return nil
+		return ErrUnregisteredProfile
 	}
 
-	path := s.ProfilePath(name)
+	path := s.profilePathLocked(name)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("cannot read profile file: %w", err)
@@ -306,6 +334,9 @@ func (s *ProfileStore) VerifyIntegrity(name string) error {
 // execution to track when each profile was last used. The registry is
 // persisted immediately after the update.
 func (s *ProfileStore) RecordApplied(name string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	meta, exists := s.registry.Profiles[name]
 	if !exists {
 		return fmt.Errorf("profile '%s' not in registry", name)
@@ -319,6 +350,9 @@ func (s *ProfileStore) RecordApplied(name string) error {
 
 // ListProfiles returns all registered profiles sorted alphabetically by name.
 func (s *ProfileStore) ListProfiles() []ProfileMeta {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	var profiles []ProfileMeta
 	for _, meta := range s.registry.Profiles {
 		profiles = append(profiles, meta)
@@ -332,6 +366,9 @@ func (s *ProfileStore) ListProfiles() []ProfileMeta {
 // GetMeta returns the ProfileMeta for a named profile. The second return
 // value indicates whether the profile exists in the registry.
 func (s *ProfileStore) GetMeta(name string) (ProfileMeta, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	meta, exists := s.registry.Profiles[name]
 	return meta, exists
 }
@@ -339,13 +376,24 @@ func (s *ProfileStore) GetMeta(name string) (ProfileMeta, bool) {
 // ProfilePath returns the filesystem path for a named profile in the store
 // directory. The path is of the form ~/.nexus/profiles/<name>.yaml.
 func (s *ProfileStore) ProfilePath(name string) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.profilePathLocked(name)
+}
+
+// profilePathLocked is the lock-free internal helper for ProfilePath.
+// Must be called with s.mu held (RLock or Lock).
+func (s *ProfileStore) profilePathLocked(name string) string {
 	return filepath.Join(s.dir, name+".yaml")
 }
 
 // ProfileContent reads the raw YAML content of a named profile from disk.
 // Returns the content as a string, or an error if the file cannot be read.
 func (s *ProfileStore) ProfileContent(name string) (string, error) {
-	path := s.ProfilePath(name)
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	path := s.profilePathLocked(name)
 	data, err := os.ReadFile(path) //nolint:gosec // path built from trusted base dir
 	if err != nil {
 		return "", err
@@ -357,9 +405,22 @@ func (s *ProfileStore) ProfileContent(name string) (string, error) {
 // package-level variable so that tests can replace it with a custom client
 // (e.g., one that trusts a test TLS server's certificate). This is the
 // same dependency-injection pattern used by bridge.bridgeExecFn.
-var defaultHTTPClient = &http.Client{Timeout: 30 * time.Second}
+var defaultHTTPClient = &http.Client{
+	Timeout: 30 * time.Second,
+	// Limit redirects to prevent redirect-based SSRF amplification.
+	// A legitimate profile fetch should never require more than 3 redirects.
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 3 {
+			return fmt.Errorf("stopped after %d redirects", len(via))
+		}
+		return nil
+	},
+}
 
-// AllowedRemoteHosts is the whitelist of domains from which profiles may be
+// allowedRemoteHostsMu protects allowedRemoteHosts from concurrent access.
+var allowedRemoteHostsMu sync.RWMutex
+
+// allowedRemoteHosts is the whitelist of domains from which profiles may be
 // fetched. Per the Nexus Protocol Zero-Trust Architecture: "No component trusts
 // another by default." An arbitrary remote URL is an SSRF vector — only
 // explicitly approved domains may serve Nexus profiles.
@@ -380,10 +441,41 @@ var defaultHTTPClient = &http.Client{Timeout: 30 * time.Second}
 //
 // To add a new approved host, modify this map and rebuild the binary.
 // There is no runtime configuration for host whitelisting — this is intentional.
-var AllowedRemoteHosts = map[string]bool{
+var allowedRemoteHosts = map[string]bool{
 	"raw.githubusercontent.com":  true,
 	"github.com":                 true,
 	"gist.githubusercontent.com": true,
+}
+
+// GetAllowedRemoteHosts returns a copy of the allowed remote hosts whitelist.
+// The returned map is safe for concurrent use and cannot mutate the original.
+func GetAllowedRemoteHosts() map[string]bool {
+	allowedRemoteHostsMu.RLock()
+	defer allowedRemoteHostsMu.RUnlock()
+
+	result := make(map[string]bool, len(allowedRemoteHosts))
+	for host, allowed := range allowedRemoteHosts {
+		result[host] = allowed
+	}
+	return result
+}
+
+// IsRemoteHostAllowed checks if a remote host is in the allowed whitelist.
+// This is the preferred read-only check for callers that don't need the full map.
+func IsRemoteHostAllowed(host string) bool {
+	allowedRemoteHostsMu.RLock()
+	defer allowedRemoteHostsMu.RUnlock()
+	return allowedRemoteHosts[host]
+}
+
+// AddAllowedRemoteHost adds a host to the remote whitelist at runtime.
+// This is for legitimate extensions (e.g., custom profile repositories) that
+// need to register additional hosts. All callers should prefer IsRemoteHostAllowed
+// or GetAllowedRemoteHosts for read-only access.
+func AddAllowedRemoteHost(host string) {
+	allowedRemoteHostsMu.Lock()
+	defer allowedRemoteHostsMu.Unlock()
+	allowedRemoteHosts[host] = true
 }
 
 // FetchProfile downloads a profile from a remote GitHub repository and stores
@@ -443,7 +535,8 @@ func (s *ProfileStore) FetchProfile(name string, remoteURL string) error {
 		if existingMeta.Version != parsed.Version && existingMeta.Source == SourceRemote {
 			// Non-fatal warning: the user explicitly asked to fetch,
 			// so we proceed. But we log the drift for auditability.
-			_ = fmt.Sprintf("version drift: local=%s remote=%s", existingMeta.Version, parsed.Version)
+			fmt.Fprintf(os.Stderr, "  ⚠️  Version drift: local=%s remote=%s\n",
+				existingMeta.Version, parsed.Version)
 		}
 	}
 
@@ -467,9 +560,9 @@ func validateRemoteURL(remoteURL string) error {
 
 	// Check host against whitelist
 	host := parsed.Hostname()
-	if !AllowedRemoteHosts[host] {
-		allowed := make([]string, 0, len(AllowedRemoteHosts))
-		for h := range AllowedRemoteHosts {
+	if !IsRemoteHostAllowed(host) {
+		allowed := make([]string, 0, len(allowedRemoteHosts))
+		for h := range allowedRemoteHosts {
 			allowed = append(allowed, h)
 		}
 		return fmt.Errorf("host '%s' is not in the allowed list: %v", host, allowed)
@@ -523,11 +616,17 @@ func FormatProfileMeta(meta ProfileMeta) string {
 		lastApplied = meta.LastApplied.Format("2006-01-02 15:04")
 	}
 
+	// Guard against short or empty SHA256 to prevent panic on slice bounds
+	truncated := meta.SHA256
+	if len(truncated) > 16 {
+		truncated = truncated[:16]
+	}
+
 	return fmt.Sprintf("  %-20s %-10s %-8s %s  %s",
 		meta.Name,
 		meta.Source,
 		meta.Version,
-		meta.SHA256[:16]+"…",
+		truncated+"…",
 		lastApplied,
 	)
 }

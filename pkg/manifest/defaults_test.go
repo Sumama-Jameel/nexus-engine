@@ -165,8 +165,8 @@ func TestBundledDefaults_EachTargetHasValidFamily(t *testing.T) {
 				t.Fatalf("failed to parse profile %q: %v", name, err)
 			}
 			for i, target := range profile.Targets {
-				if !AllowedPackageFamilies[target.Family] {
-					t.Errorf("profile %q targets[%d].family %q is not in AllowedPackageFamilies", name, i, target.Family)
+				if !IsPackageFamilyAllowed(target.Family) {
+					t.Errorf("profile %q targets[%d].family %q is not in allowedPackageFamilies", name, i, target.Family)
 				}
 				if len(target.Packages) == 0 {
 					t.Errorf("profile %q targets[%d] should have at least one package", name, i)

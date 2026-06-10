@@ -117,6 +117,14 @@ func NewDownloader(progress DownloadProgress) *Downloader {
 			// Overall timeout is handled by the context, not the client,
 			// because the context can be extended for large downloads.
 			Timeout: 0,
+			// Limit redirects to prevent redirect-based SSRF amplification.
+			// A legitimate download should never require more than 3 redirects.
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				if len(via) >= 3 {
+					return fmt.Errorf("stopped after %d redirects", len(via))
+				}
+				return nil
+			},
 		},
 		progress: progress,
 	}

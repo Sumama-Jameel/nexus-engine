@@ -41,7 +41,7 @@ var (
 	wslDistroName   string
 	wslSkipVerify   bool
 	wslSkipDownload bool
-	nexusVersion    = "0.6.0"
+	nexusVersion    = "1.0.0"
 )
 
 func main() {
@@ -994,14 +994,16 @@ func runProfileShow(cmd *cobra.Command, args []string) error {
 		// Show raw content
 		content, err := store.ProfileContent(name)
 		if err != nil {
-			fmt.Printf("  ⛔ Could not read profile: %v\n", err)
-		} else {
-			fmt.Println("  ── RAW CONTENT ──────────────────────────────")
-			fmt.Println(content)
+			return fmt.Errorf("could not read profile: %w", err)
 		}
+		fmt.Println("  ── RAW CONTENT ──────────────────────────────")
+		fmt.Println(content)
 	}
 
 	fmt.Println()
+	if resolveErr != nil {
+		return fmt.Errorf("profile resolution failed: %w", resolveErr)
+	}
 	return nil
 }
 
@@ -1016,8 +1018,7 @@ func runProfileValidate(cmd *cobra.Command, args []string) error {
 
 	data, readErr := os.ReadFile(filePath) //nolint:gosec
 	if readErr != nil {
-		fmt.Fprintf(os.Stderr, "  ⛔ Failed to read file: %v\n", readErr)
-		os.Exit(1)
+		return fmt.Errorf("failed to read file: %w", readErr)
 	}
 
 	profile, validateErr := rdeps.ValidateProfileBytes(data)
@@ -1027,7 +1028,7 @@ func runProfileValidate(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Fprintf(os.Stderr, "  ⛔ INVALID: %v\n", validateErr)
 		}
-		os.Exit(1)
+		return fmt.Errorf("invalid profile: %w", validateErr)
 	}
 
 	if outputJSON {
@@ -1096,7 +1097,7 @@ func runProfileCreate(cmd *cobra.Command, args []string) error {
 		if f == "" {
 			continue
 		}
-		if !manifest.AllowedPackageFamilies[f] {
+		if !manifest.IsPackageFamilyAllowed(f) {
 			fmt.Printf("  ⚠️  Skipping unknown family: %s\n", f)
 			continue
 		}
@@ -1134,7 +1135,7 @@ func runProfileCreate(cmd *cobra.Command, args []string) error {
 	// Validate
 	if err := manifest.Validate(profile); err != nil {
 		fmt.Fprintf(os.Stderr, "  ⛔ Validation failed: %v\n", err)
-		return nil
+		return fmt.Errorf("validation failed: %w", err)
 	}
 
 	// Serialize
@@ -1146,7 +1147,7 @@ func runProfileCreate(cmd *cobra.Command, args []string) error {
 	// Schema validate
 	if _, err := manifest.ParseBytes([]byte(yamlContent)); err != nil {
 		fmt.Fprintf(os.Stderr, "  ⛔ Schema validation failed: %v\n", err)
-		return nil
+		return fmt.Errorf("schema validation failed: %w", err)
 	}
 
 	// Save to store
@@ -1190,7 +1191,7 @@ func runProfileFetch(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Fprintf(os.Stderr, "  ⛔ Fetch failed: %v\n", err)
 		}
-		return nil
+		return fmt.Errorf("fetch failed: %w", err)
 	}
 
 	meta, _ := store.GetMeta(name)
@@ -1222,7 +1223,7 @@ func runProfileRemove(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Fprintf(os.Stderr, "  ⛔ %v\n", err)
 		}
-		return nil
+		return fmt.Errorf("remove failed: %w", err)
 	}
 
 	if outputJSON {
@@ -1251,7 +1252,7 @@ func runProfileVerify(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Fprintf(os.Stderr, "  ⛔ INTEGRITY CHECK FAILED: %v\n", err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("integrity check failed: %w", err)
 	}
 
 	meta, _ := store.GetMeta(name)
@@ -1320,6 +1321,7 @@ func runProfileApply(cmd *cobra.Command, args []string) error {
 
 	if orchErr != nil {
 		fmt.Fprintf(os.Stderr, "  ⛔ %v\n", orchErr)
+		return fmt.Errorf("apply failed: %w", orchErr)
 	}
 
 	fmt.Println(installer.FormatOrchestratorResult(result))
@@ -1379,7 +1381,7 @@ func runWSLCheck(cmd *cobra.Command, args []string) error {
 			"blockers": status.Blockers,
 		})
 		if !status.Ready {
-			os.Exit(1)
+			return fmt.Errorf("system is not ready for WSL2 setup")
 		}
 		return nil
 	}
@@ -1387,7 +1389,7 @@ func runWSLCheck(cmd *cobra.Command, args []string) error {
 	fmt.Print(bridge.FormatWSL2Check(status))
 
 	if !status.Ready {
-		os.Exit(1)
+		return fmt.Errorf("system is not ready for WSL2 setup")
 	}
 	return nil
 }
@@ -1405,7 +1407,7 @@ func runWSLImport(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("\n  ⛔ %s\n\n", errMsg)
 		}
-		os.Exit(1)
+		return fmt.Errorf("%s", errMsg)
 	}
 
 	// Determine image name (default: nexus-alpine)
@@ -1422,7 +1424,7 @@ func runWSLImport(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("\n  ⛔ %v\n\n", err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("failed to find image %s: %w", imageName, err)
 	}
 
 	// Validate distro name
@@ -1432,7 +1434,7 @@ func runWSLImport(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("\n  ⛔ Invalid distro name: %v\n\n", err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("invalid distro name: %w", err)
 	}
 
 	// Determine install path
@@ -1446,7 +1448,7 @@ func runWSLImport(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("\n  ⛔ Invalid install path: %v\n\n", err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("invalid install path: %w", err)
 	}
 
 	// Create the importer
@@ -1525,7 +1527,7 @@ func runWSLSetup(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("\n  ⛔ %s\n\n", errMsg)
 		}
-		os.Exit(1)
+		return fmt.Errorf("%s", errMsg)
 	}
 
 	if !outputJSON {
@@ -1549,7 +1551,7 @@ func runWSLSetup(cmd *cobra.Command, args []string) error {
 			fmt.Println("  ⛔ System is NOT ready for WSL2 setup")
 			fmt.Print(bridge.FormatWSL2Check(status))
 		}
-		os.Exit(1)
+		return fmt.Errorf("system is not ready for WSL2 setup")
 	}
 
 	if !outputJSON {
@@ -1564,7 +1566,7 @@ func runWSLSetup(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("  ⛔ %v\n", err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("failed to find default image: %w", err)
 	}
 
 	if err := wsl.ValidateDistroName(wslDistroName); err != nil {
@@ -1573,7 +1575,7 @@ func runWSLSetup(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("  ⛔ Invalid distro name: %v\n", err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("invalid distro name: %w", err)
 	}
 
 	homeDir, _ := os.UserHomeDir()
@@ -1645,7 +1647,7 @@ func runWSLRemove(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Println("\n  ⛔ WSL2 management is only available on Windows")
 		}
-		os.Exit(1)
+		return fmt.Errorf("WSL2 management is only available on Windows")
 	}
 
 	state, _ := engine.NewStateTracker()
@@ -1655,9 +1657,10 @@ func runWSLRemove(cmd *cobra.Command, args []string) error {
 	}
 
 	if !isManaged && !forceRemove {
+		errMsg := fmt.Sprintf("'%s' is not a Nexus-managed WSL2 distribution. Use --force to remove anyway.", distroName)
 		if outputJSON {
 			_ = jsonOutput(map[string]interface{}{
-				"error":   fmt.Sprintf("'%s' is not a Nexus-managed WSL2 distribution. Use --force to remove anyway.", distroName),
+				"error":   errMsg,
 				"managed": false,
 			})
 		} else {
@@ -1665,7 +1668,7 @@ func runWSLRemove(cmd *cobra.Command, args []string) error {
 			fmt.Println("  Use --force to remove anyway.")
 			fmt.Println()
 		}
-		os.Exit(1)
+		return fmt.Errorf("%s", errMsg)
 	}
 
 	wslImporter := wsl.NewWSL2Importer(wsl.ExecFunc(engine.SanitizeAndExecute))
@@ -1689,7 +1692,7 @@ func runWSLRemove(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("\n  ⛔ Failed to remove '%s': %v\n\n", distroName, err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("failed to remove distro %s: %w", distroName, err)
 	}
 
 	if state != nil {
@@ -1760,7 +1763,7 @@ func runWSLEnter(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("\n  ⛔ %s\n\n", errMsg)
 		}
-		os.Exit(1)
+		return fmt.Errorf("%s", errMsg)
 	}
 
 	// Allow distro name from positional arg or --name flag
@@ -1775,7 +1778,7 @@ func runWSLEnter(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("\n  ⛔ Invalid distro name: %v\n\n", err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("invalid distro name: %w", err)
 	}
 
 	// Check if the distro is Nexus-managed
@@ -1805,7 +1808,7 @@ func runWSLEnter(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("\n  ⛔ Failed to enter distribution '%s': %v\n\n", distroName, err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("failed to enter distribution %s: %w", distroName, err)
 	}
 
 	// If we got output (non-interactive mode), show it

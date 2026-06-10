@@ -350,8 +350,8 @@ func TestAllowedCommands_WhitelistIntegrity(t *testing.T) {
 		cmd := cmd
 		t.Run(cmd, func(t *testing.T) {
 			t.Parallel()
-			if !AllowedCommands[cmd] {
-				t.Errorf("AllowedCommands[%q] = false, want true", cmd)
+			if !IsCommandAllowed(cmd) {
+				t.Errorf("IsCommandAllowed(%q) = false, want true", cmd)
 			}
 		})
 	}
@@ -372,8 +372,8 @@ func TestAllowedCommands_DangerousCommandsExcluded(t *testing.T) {
 		cmd := cmd
 		t.Run(cmd, func(t *testing.T) {
 			t.Parallel()
-			if AllowedCommands[cmd] {
-				t.Errorf("AllowedCommands[%q] = true — this dangerous command must NOT be whitelisted", cmd)
+			if IsCommandAllowed(cmd) {
+				t.Errorf("IsCommandAllowed(%q) = true — this dangerous command must NOT be whitelisted", cmd)
 			}
 		})
 	}
@@ -449,8 +449,8 @@ func TestSanitizeAndExecute_SafeDottedArguments(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSanitizeAndExecute_ConcurrentSafety(t *testing.T) {
-	// Test that AllowedCommands map can be read concurrently without races.
-	// The map is never written to after init, but we verify -race flag passes.
+	// Test that allowedCommands map can be read concurrently without races.
+	// The map is protected by sync.RWMutex for safe concurrent access.
 	done := make(chan bool, 10)
 
 	for i := 0; i < 10; i++ {
@@ -460,13 +460,54 @@ func TestSanitizeAndExecute_ConcurrentSafety(t *testing.T) {
 			// These should all fail at the whitelist check — no real execution
 			_, _ = SanitizeAndExecute(ctx, "rm", "-rf", "/")
 			_, _ = SanitizeAndExecute(ctx, "ls", "/tmp")
-			_ = AllowedCommands["sudo"]
-			_ = AllowedCommands["rm"]
+			_ = IsCommandAllowed("sudo")
+			_ = IsCommandAllowed("rm")
+			_ = GetAllowedCommands()
 			done <- true
 		}()
 	}
 
 	for i := 0; i < 10; i++ {
 		<-done
+	}
+}
+
+// ---------------------------------------------------------------------------
+// AddAllowedCommand — runtime extension
+// ---------------------------------------------------------------------------
+
+func TestAddAllowedCommand(t *testing.T) {
+	// Save original state
+	origCommands := GetAllowedCommands()
+	defer func() {
+		// Restore original commands
+		allowedCommandsMu.Lock()
+		allowedCommands = origCommands
+		allowedCommandsMu.Unlock()
+	}()
+
+	// Add a new command
+	AddAllowedCommand("custom-tool")
+
+	if !IsCommandAllowed("custom-tool") {
+		t.Error("AddAllowedCommand should add command to whitelist")
+	}
+
+	// Verify original commands still exist
+	if !IsCommandAllowed("git") {
+		t.Error("original commands should still be in whitelist")
+	}
+}
+
+func TestGetAllowedCommands_ReturnsCopy(t *testing.T) {
+	// Get a copy of the allowed commands
+	commands := GetAllowedCommands()
+
+	// Modify the copy
+	commands["rm"] = true
+
+	// Original should not be affected
+	if IsCommandAllowed("rm") {
+		t.Error("modifying GetAllowedCommands() result should not affect original")
 	}
 }

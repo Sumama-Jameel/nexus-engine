@@ -525,7 +525,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("all valid families pass", func(t *testing.T) {
-		for family := range AllowedPackageFamilies {
+		for family := range GetAllowedPackageFamilies() {
 			profile := &NexusProfile{
 				Name:    "test-" + family,
 				Version: "1.0.0",
@@ -911,8 +911,8 @@ func TestFormatProfileYAML(t *testing.T) {
 func TestAllowedPackageFamilies(t *testing.T) {
 	expected := []string{"debian", "arch", "fedora", "alpine", "ubuntu", "linux"}
 	for _, family := range expected {
-		if !AllowedPackageFamilies[family] {
-			t.Errorf("family %q should be in AllowedPackageFamilies", family)
+		if !IsPackageFamilyAllowed(family) {
+			t.Errorf("family %q should be in allowedPackageFamilies", family)
 		}
 	}
 }

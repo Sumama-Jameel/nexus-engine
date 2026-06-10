@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 
@@ -62,7 +63,10 @@ type TargetConfig struct {
 	Packages []string `yaml:"packages"` // ONLY package names — no scripts allowed
 }
 
-// AllowedPackageFamilies defines the only permitted package families for
+// allowedPackageFamiliesMu protects allowedPackageFamilies from concurrent access.
+var allowedPackageFamiliesMu sync.RWMutex
+
+// allowedPackageFamilies defines the only permitted package families for
 // profile targets. Per the plan: "only approved package managers (apt, pacman,
 // npm, pip) can be used."
 //
@@ -72,13 +76,34 @@ type TargetConfig struct {
 // vector. By restricting families to this explicit whitelist, the engine can
 // safely translate each family to its known, safe command without risk of
 // executing arbitrary programs.
-var AllowedPackageFamilies = map[string]bool{
+var allowedPackageFamilies = map[string]bool{
 	"debian": true, // apt-get
 	"arch":   true, // pacman
 	"fedora": true, // dnf
 	"alpine": true, // apk
 	"ubuntu": true, // apt-get
 	"linux":  true, // generic (all families)
+}
+
+// GetAllowedPackageFamilies returns a copy of the allowed package families whitelist.
+// The returned map is safe for concurrent use and cannot mutate the original.
+func GetAllowedPackageFamilies() map[string]bool {
+	allowedPackageFamiliesMu.RLock()
+	defer allowedPackageFamiliesMu.RUnlock()
+
+	result := make(map[string]bool, len(allowedPackageFamilies))
+	for family, allowed := range allowedPackageFamilies {
+		result[family] = allowed
+	}
+	return result
+}
+
+// IsPackageFamilyAllowed checks if a package family is in the allowed whitelist.
+// This is the preferred read-only check for callers that don't need the full map.
+func IsPackageFamilyAllowed(family string) bool {
+	allowedPackageFamiliesMu.RLock()
+	defer allowedPackageFamiliesMu.RUnlock()
+	return allowedPackageFamilies[family]
 }
 
 // MaxExtendsDepth is the maximum allowed depth for profile extends chains.
@@ -209,7 +234,7 @@ func Validate(profile *NexusProfile) error {
 		if target.Family == "" {
 			return fmt.Errorf("VALIDATION: targets[%d].family is required", i)
 		}
-		if !AllowedPackageFamilies[target.Family] {
+		if !IsPackageFamilyAllowed(target.Family) {
 			return fmt.Errorf("VALIDATION: targets[%d].family '%s' is not in the allowed list: %v",
 				i, target.Family, allowedFamiliesList())
 		}
@@ -367,8 +392,11 @@ func FormatProfileYAML(profile *NexusProfile) (string, error) {
 }
 
 func allowedFamiliesList() []string {
-	families := make([]string, 0, len(AllowedPackageFamilies))
-	for f := range AllowedPackageFamilies {
+	allowedPackageFamiliesMu.RLock()
+	defer allowedPackageFamiliesMu.RUnlock()
+
+	families := make([]string, 0, len(allowedPackageFamilies))
+	for f := range allowedPackageFamilies {
 		families = append(families, f)
 	}
 	return families
