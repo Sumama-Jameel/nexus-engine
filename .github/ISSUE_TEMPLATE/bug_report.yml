@@ -1,0 +1,93 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in Nexus Protocol
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please fill out the sections below.
+        
+        **Security vulnerabilities**: Do NOT report security issues here. See [SECURITY.md](../SECURITY.md) for responsible disclosure.
+
+  - type: dropdown
+    id: nexus-version
+    attributes:
+      label: Nexus Version
+      description: What version of Nexus are you running?
+      options:
+        - v0.6.0
+        - v0.5.0
+        - v0.4.0
+        - v0.3.0
+        - v0.2.0
+        - v0.1.0
+        - From source (main branch)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What OS are you running Nexus on?
+      options:
+        - Linux (Native)
+        - Linux (WSL2)
+        - Windows 11
+        - Windows 10
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: wsl-status
+    attributes:
+      label: WSL2 Status (if applicable)
+      description: Is WSL2 relevant to this bug?
+      options:
+        - Not applicable (Native Linux)
+        - WSL2 enabled and working
+        - WSL2 not enabled
+        - WSL2 enabled but not working
+        - Unknown
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: What commands did you run? What did you expect to happen?
+      placeholder: |
+        1. Run `nexus wsl setup`
+        2. See error about ...
+        3. Expected successful import
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? Include error messages if applicable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: probe-output
+    attributes:
+      label: System Information
+      description: Output of `nexus probe --json` (optional but very helpful)
+      render: json
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context, logs, or screenshots that might help.

@@ -1,0 +1,50 @@
+# Nexus Protocol — golangci-lint Configuration
+# V6: "The Global Open Source Release"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - gosec
+    - gofmt
+    - goimports
+    - misspell
+    - ineffassign
+    - unused
+    - gosimple
+
+linters-settings:
+  govet:
+    enable-all: true
+  gosec:
+    excludes:
+      - G104  # Audit errors not checked (too many false positives for CLI tools)
+  misspell:
+    locale: US
+    template: |-
+      Copyright 2024-2026 Nexus Protocol Contributors
+
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+      You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+      limitations under the License.
+
+issues:
+  max-issues-per-linter: 50
+  max-same-issues: 5
+  exclude-use-default: false
+
+severity:
+  default-severity: warning
