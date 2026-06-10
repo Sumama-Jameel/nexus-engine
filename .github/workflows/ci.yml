@@ -114,4 +114,4 @@ jobs:
         run: |
           BINARY=nexus-${{ matrix.goos }}-${{ matrix.goarch }}
           if [ "${{ matrix.goos }}" = "windows" ]; then BINARY="${BINARY}.exe"; fi
-          go build -ldflags "-s -w" -o "${BINARY}" ./
+          go build -ldflags "-s -w" -o "${BINARY}" ./cmd/nexus/
