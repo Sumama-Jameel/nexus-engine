@@ -5,6 +5,9 @@
 # Built binaries
 nexus
 nexus-*
+!nexus-*.json
+!nexus-*.yaml
+!nexus-*.yml
 *.exe
 
 # GoReleaser output

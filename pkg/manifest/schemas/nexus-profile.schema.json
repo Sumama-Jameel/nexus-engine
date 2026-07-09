@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Nexus Profile",
+  "description": "Schema for Nexus OS Environment Manifest. Per the Protocol: no 'run:' commands are ever allowed.",
+  "type": "object",
+  "required": ["name", "version"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "Profile identifier, lowercase alphanumeric with hyphens"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "author": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "extends": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "Profile to inherit from — packages are additive, env vars are overridden by child"
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["family", "packages"],
+        "additionalProperties": false,
+        "properties": {
+          "family": {
+            "type": "string",
+            "enum": ["debian", "ubuntu", "arch", "fedora", "alpine", "linux"]
+          },
+          "packages": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._+-]*$",
+              "description": "Package name — must be a valid package identifier, no shell metacharacters"
+            }
+          }
+        }
+      }
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Environment variables to set"
+    },
+    "suggested_distro": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "V16: The Linux distro this profile is designed for. 'any' means it works on all distros. When the current distro differs, the engine warns the user and suggests a Distrobox container or WSL2 reimport."
+    },
+    "wsl_available": {
+      "type": "boolean",
+      "default": false,
+      "description": "V16: Whether the suggested_distro is available as a WSL2 image. true = user can `nexus wsl import` to switch distro. false = must use Distrobox fallback."
+    },
+    "dotfiles": {
+      "type": "object",
+      "description": "Per V7: declarative dotfile management via Chezmoi. Optional; profiles without this section are unaffected.",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://",
+          "description": "HTTPS URL of the Git repository to bind to Chezmoi (e.g., https://github.com/user/dotfiles). Host must be in the dotfiles AllowedSourceHosts whitelist."
+        },
+        "apply_on_init": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, 'nexus init' will run 'nexus dotfiles apply' after binding the source. When false, dotfiles are only bound \u2014 applied on explicit 'nexus dotfiles apply'."
+        },
+        "sync_on_apply": {
+          "type": "boolean",
+          "default": false,
+          "description": "V8: When true, 'nexus profile apply' triggers a full pull + apply + push sync after the bind step. Lets profile switching be a sync point. Default false (backward-compatible with V7)."
+        },
+        "managed_paths": {
+          "type": "array",
+          "description": "Files to track with 'chezmoi add' after the source is bound. Each entry must be an absolute path under the user's $HOME.",
+          "items": {
+            "type": "string",
+            "pattern": "^/",
+            "minLength": 1,
+            "description": "Absolute path (must start with /)"
+          }
+        },
+        "sensitive_paths": {
+          "type": "array",
+          "description": "Paths within managed_paths that are sensitive (SSH keys, credentials). Listed for documentation; the engine still requires --force to manage these at runtime.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
