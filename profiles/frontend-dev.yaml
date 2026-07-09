@@ -1,0 +1,57 @@
+# Nexus Profile: Frontend Development Environment
+# Extends base-dev with frontend web development toolchain.
+name: frontend-dev
+version: "1.0.0"
+description: "Frontend web development — Node.js, TypeScript, React, Vue, build tools"
+author: nexus-core
+extends: base-dev
+suggested_distro: ubuntu
+wsl_available: true
+
+targets:
+  - family: debian
+    packages:
+      - nodejs
+      - npm
+      - yarnpkg
+      - typescript
+      - chromium
+      - firefox-esr
+
+  - family: ubuntu
+    packages:
+      - nodejs
+      - npm
+      - yarnpkg
+      - typescript
+      - chromium-browser
+      - firefox
+
+  - family: arch
+    packages:
+      - nodejs
+      - npm
+      - yarn
+      - typescript
+      - chromium
+      - firefox
+
+  - family: fedora
+    packages:
+      - nodejs
+      - npm
+      - yarnpkg
+      - typescript
+      - chromium
+      - firefox
+
+  - family: alpine
+    packages:
+      - nodejs
+      - npm
+      - yarn
+      - chromium
+      - firefox
+
+env:
+  NEXUS_PROFILE: frontend-dev

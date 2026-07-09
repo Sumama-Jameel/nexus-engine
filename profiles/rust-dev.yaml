@@ -1,0 +1,73 @@
+# Nexus Profile: Rust Development Environment
+# Extends base-dev with Rust toolchain.
+name: rust-dev
+version: "1.0.0"
+description: "Rust development — rustc, cargo, clang, lldb, and essential tooling"
+author: nexus-core
+extends: base-dev
+suggested_distro: any
+wsl_available: true
+
+targets:
+  - family: debian
+    packages:
+      - rustc
+      - cargo
+      - rust-src
+      - rust-gdb
+      - lldb
+      - clang
+      - llvm
+      - libclang-dev
+      - libssl-dev
+      - pkg-config
+
+  - family: ubuntu
+    packages:
+      - rustc
+      - cargo
+      - rust-src
+      - rust-gdb
+      - lldb
+      - clang
+      - llvm
+      - libclang-dev
+      - libssl-dev
+      - pkg-config
+
+  - family: arch
+    packages:
+      - rust
+      - cargo
+      - rust-src
+      - lldb
+      - clang
+      - llvm
+      - openssl
+      - pkg-config
+
+  - family: fedora
+    packages:
+      - rust
+      - cargo
+      - rust-src
+      - lldb
+      - clang
+      - llvm
+      - openssl-devel
+      - pkgconfig
+
+  - family: alpine
+    packages:
+      - rust
+      - cargo
+      - rust-src
+      - lldb
+      - clang
+      - llvm
+      - openssl-dev
+      - pkgconfig
+
+env:
+  RUST_BACKTRACE: "1"
+  NEXUS_PROFILE: rust-dev

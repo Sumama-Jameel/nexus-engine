@@ -1,0 +1,150 @@
+[
+  {
+    "name": "base-dev",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "The Nexus Base Developer Environment \u2014 essential tools for every engineer",
+    "target_families": [
+      "arch",
+      "fedora",
+      "alpine",
+      "debian"
+    ],
+    "source_url": "",
+    "sha256": "a8bdd28d503d96f64452c55518e6bde336cc1b2154773ea6d8f5b164d1bc7bf6"
+  },
+  {
+    "name": "base-gamer-amd",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "Gaming environment for AMD GPUs \u2014 Steam, Lutris, AMD drivers, ROCm",
+    "target_families": [
+      "ubuntu",
+      "arch",
+      "fedora",
+      "debian",
+      "alpine"
+    ],
+    "source_url": "",
+    "sha256": "3e2630fcb7c5dc1d5b0f10589ce2fc4dfc169fc68c549143fd59378f89ccde62"
+  },
+  {
+    "name": "base-gamer-nvidia",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "Gaming environment for NVIDIA GPUs \u2014 Steam, Lutris, NVIDIA drivers, CUDA",
+    "target_families": [
+      "ubuntu",
+      "arch",
+      "fedora",
+      "debian",
+      "alpine"
+    ],
+    "source_url": "",
+    "sha256": "2fc9de081e93d0762e3357f3b49f064ec13aa29e597feb9a8ffebb7ba26cdf23"
+  },
+  {
+    "name": "base-gamer",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "Gaming environment \u2014 Steam, Lutris, Vulkan, Wine, performance tuning",
+    "target_families": [
+      "ubuntu",
+      "arch",
+      "fedora",
+      "debian",
+      "alpine"
+    ],
+    "source_url": "",
+    "sha256": "210684995cd6cdb1b4da438a6be82490378cf171bf6a7a7f4fa9cd962e86fea9"
+  },
+  {
+    "name": "base-work",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "Focused work environment \u2014 office tools, communication, minimal footprint",
+    "target_families": [
+      "ubuntu",
+      "arch",
+      "fedora",
+      "debian",
+      "alpine"
+    ],
+    "source_url": "",
+    "sha256": "54686dd0b0865d14dc24b601e83238d2bcd2ef2a005010118f27123943f6346a"
+  },
+  {
+    "name": "data-science",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "The Nexus Data Science Environment \u2014 ML/DL tools on top of the base dev setup",
+    "target_families": [
+      "arch",
+      "fedora",
+      "alpine",
+      "debian"
+    ],
+    "source_url": "",
+    "sha256": "e77fbdabcb6188ad10e1a642e05406daa807bc01204db0dd1ce050b19d698a9a"
+  },
+  {
+    "name": "ethical-hacker",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "Penetration testing toolkit \u2014 network scanning, exploitation, forensics, reverse engineering",
+    "target_families": [
+      "ubuntu",
+      "arch",
+      "fedora",
+      "debian",
+      "alpine"
+    ],
+    "source_url": "",
+    "sha256": "d9ad65956b4d5351806ad75084f96d6e8dc594b8d0af3581cc6ac4c737a66e92"
+  },
+  {
+    "name": "frontend-dev",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "Frontend web development \u2014 Node.js, TypeScript, React, Vue, build tools",
+    "target_families": [
+      "ubuntu",
+      "arch",
+      "fedora",
+      "debian",
+      "alpine"
+    ],
+    "source_url": "",
+    "sha256": "df6f4f8f710f76b58b5f71f00915025b7cf7d3bd08614d8919903afc8bcffb88"
+  },
+  {
+    "name": "go-dev",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "Go development \u2014 golang, delve debugger, staticcheck, and essential tooling",
+    "target_families": [
+      "ubuntu",
+      "arch",
+      "fedora",
+      "debian",
+      "alpine"
+    ],
+    "source_url": "",
+    "sha256": "c981c911dadf75784fed03d0bf88a17d1096da0c931ea83b9aef3b6e790f2173"
+  },
+  {
+    "name": "rust-dev",
+    "version": "1.0.0",
+    "author": "Nexus Contributors",
+    "description": "Rust development \u2014 rustc, cargo, clang, lldb, and essential tooling",
+    "target_families": [
+      "ubuntu",
+      "arch",
+      "fedora",
+      "debian",
+      "alpine"
+    ],
+    "source_url": "",
+    "sha256": "acec9afe172ed850653c37b16378cbea5b124b96b3324b3315b42b8d9aa2c9bb"
+  }
+]

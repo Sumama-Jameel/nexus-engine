@@ -534,9 +534,9 @@ func FormatProfileMeta(meta ProfileMeta) string {
 
 // DefaultRemoteURL is the default GitHub raw URL for the community profiles
 // repository. This URL is used by DefaultRemoteBaseURL and the CLI when no
-// custom remote is configured. It points to the nexus-profiles repository
+// custom remote is configured. It points to the profiles directory in this
 // on GitHub, which is in the AllowedRemoteHosts whitelist.
-const DefaultRemoteURL = "https://raw.githubusercontent.com/Sumama-Jameel/nexus-profiles/main/profiles"
+const DefaultRemoteURL = "https://raw.githubusercontent.com/Sumama-Jameel/nexus-engine/main/profiles"
 
 // IsValidProfileName checks if a name conforms to the Nexus profile naming
 // rules. Valid names must match the pattern ^[a-z0-9][a-z0-9-]*$: they must

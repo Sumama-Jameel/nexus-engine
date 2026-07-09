@@ -1,0 +1,49 @@
+# Nexus Profile: Go Development Environment
+# Extends base-dev with Go toolchain.
+name: go-dev
+version: "1.0.0"
+description: "Go development — golang, delve debugger, staticcheck, and essential tooling"
+author: nexus-core
+extends: base-dev
+suggested_distro: any
+wsl_available: true
+
+targets:
+  - family: debian
+    packages:
+      - golang
+      - golang-go
+      - gdb
+      - delve
+      - golang-staticcheck
+
+  - family: ubuntu
+    packages:
+      - golang
+      - golang-go
+      - gdb
+      - delve
+
+  - family: arch
+    packages:
+      - go
+      - go-tools
+      - delve
+      - gdb
+
+  - family: fedora
+    packages:
+      - golang
+      - golang-x-tools
+      - delve
+      - gdb
+
+  - family: alpine
+    packages:
+      - go
+      - go-tools
+      - gdb
+
+env:
+  GOPROXY: https://proxy.golang.org,direct
+  NEXUS_PROFILE: go-dev

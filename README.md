@@ -4,7 +4,6 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Sumama-Jameel/nexus-engine)](https://goreportcard.com/report/github.com/Sumama-Jameel/nexus-engine)
 [![GoDoc](https://godoc.org/github.com/Sumama-Jameel/nexus-engine?status.svg)](https://godoc.org/github.com/Sumama-Jameel/nexus-engine)
-[![CI Status](https://github.com/Sumama-Jameel/nexus-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/Sumama-Jameel/nexus-engine/actions/workflows/ci.yml)
 
 **Nexus Protocol. One environment. One command. Any machine.**
 

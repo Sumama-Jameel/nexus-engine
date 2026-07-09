@@ -617,22 +617,22 @@ func TestValidateRemoteURL(t *testing.T) {
         }{
                 {
                         name:    "valid GitHub raw URL",
-                        url:     "https://raw.githubusercontent.com/Sumama-Jameel/nexus-profiles/main/profiles",
-                        wantErr: false,
-                },
-                {
-                        name:    "valid GitHub URL",
-                        url:     "https://github.com/Sumama-Jameel/nexus-profiles",
-                        wantErr: false,
-                },
-                {
-                        name:    "valid gist URL",
-                        url:     "https://gist.githubusercontent.com/user/hash/raw/profile.yaml",
-                        wantErr: false,
-                },
-                {
-                        name:    "HTTP rejected",
-                        url:     "http://raw.githubusercontent.com/Sumama-Jameel/nexus-profiles",
+			url:     "https://raw.githubusercontent.com/Sumama-Jameel/nexus-engine/main/profiles",
+			wantErr: false,
+		},
+		{
+			name:    "valid GitHub URL",
+			url:     "https://github.com/Sumama-Jameel/nexus-engine",
+			wantErr: false,
+		},
+		{
+			name:    "valid gist URL",
+			url:     "https://gist.githubusercontent.com/user/hash/raw/profile.yaml",
+			wantErr: false,
+		},
+		{
+			name:    "HTTP rejected",
+			url:     "http://raw.githubusercontent.com/Sumama-Jameel/nexus-engine",
                         wantErr: true,
                 },
                 {

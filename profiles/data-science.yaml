@@ -1,0 +1,50 @@
+# Nexus Profile: Data Science Environment
+# Demonstrates V3's extends: mechanism — inherits base-dev, adds ML packages
+name: data-science
+version: "1.0.0"
+description: "The Nexus Data Science Environment — ML/DL tools on top of the base dev setup"
+author: nexus-core
+extends: base-dev
+
+targets:
+  - family: debian
+    packages:
+      - python3-venv
+      - python3-numpy
+      - python3-pandas
+      - python3-matplotlib
+      - python3-scipy
+      - python3-sklearn
+      - jupyter-notebook
+
+  - family: arch
+    packages:
+      - python-virtualenv
+      - python-numpy
+      - python-pandas
+      - python-matplotlib
+      - python-scipy
+      - jupyterlab
+
+  - family: fedora
+    packages:
+      - python3-virtualenv
+      - python3-numpy
+      - python3-pandas
+      - python3-matplotlib
+      - python3-scipy
+      - python3-scikit-learn
+      - jupyter
+
+  - family: alpine
+    packages:
+      - py3-virtualenv
+      - py3-numpy
+      - py3-pandas
+      - py3-matplotlib
+      - py3-scipy
+
+env:
+  EDITOR: vim
+  NEXUS_PROFILE: data-science
+  JUPYTER_CONFIG_DIR: "$NEXUS_HOME/jupyter"

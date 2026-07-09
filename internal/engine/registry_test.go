@@ -79,7 +79,7 @@ func TestSubmitProfile_Valid(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !contains(result, "github.com/Sumama-Jameel/nexus-profiles") {
+	if !contains(result, "github.com/Sumama-Jameel/nexus-engine") {
 		t.Fatalf("result missing expected URL:\n%s", result)
 	}
 	digest := fmt.Sprintf("%x", sha256.Sum256(data))

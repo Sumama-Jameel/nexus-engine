@@ -1,0 +1,85 @@
+# Nexus Profile: Gaming Environment
+# Designed for Pop!_OS. On other distros equivalent packages are installed.
+name: base-gamer
+version: "1.0.0"
+description: "Gaming environment — Steam, Lutris, Vulkan, Wine, performance tuning"
+author: nexus-core
+suggested_distro: pop-os
+wsl_available: false
+
+targets:
+  - family: debian
+    packages:
+      - steam
+      - steam-devices
+      - lutris
+      - gamemode
+      - mangohud
+      - vulkan-tools
+      - mesa-utils
+      - wine
+      - wine32
+      - winetricks
+      - libvulkan1
+      - mesa-vulkan-drivers
+
+  - family: ubuntu
+    packages:
+      - steam
+      - steam-devices
+      - lutris
+      - gamemode
+      - mangohud
+      - vulkan-tools
+      - mesa-utils
+      - wine
+      - wine32
+      - winetricks
+      - libvulkan1
+      - mesa-vulkan-drivers
+
+  - family: arch
+    packages:
+      - steam
+      - lutris
+      - gamemode
+      - mangohud
+      - vulkan-tools
+      - mesa-utils
+      - wine
+      - wine-mono
+      - winetricks
+      - vulkan-icd-loader
+      - lib32-vulkan-icd-loader
+      - mesa
+      - lib32-mesa
+
+  - family: fedora
+    packages:
+      - steam
+      - lutris
+      - gamemode
+      - mangohud
+      - vulkan-tools
+      - mesa-utils
+      - wine-core
+      - winetricks
+      - vulkan-loader
+      - mesa-vulkan-drivers
+
+  - family: alpine
+    packages:
+      - steam-devices
+      - gamemode
+      - mangohud
+      - vulkan-tools
+      - mesa-utils
+      - wine
+      - winetricks
+      - mesa-vulkan-drivers
+      - mesa-dri-gallium
+
+env:
+  GAMEMODE_AUTOSTART: "1"
+  MANGOHUD: "1"
+  NEXUS_PROFILE: base-gamer

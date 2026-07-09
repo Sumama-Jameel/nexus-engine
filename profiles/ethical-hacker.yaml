@@ -1,0 +1,152 @@
+# Nexus Profile: Ethical Hacking Environment
+# Designed for Kali Linux. On other distros equivalent tools are installed.
+# For full experience, run on Kali Linux or use Distrobox with kali:latest.
+name: ethical-hacker
+version: "1.0.0"
+description: "Penetration testing toolkit — network scanning, exploitation, forensics, reverse engineering"
+author: nexus-core
+suggested_distro: kali
+wsl_available: true
+
+targets:
+  - family: debian
+    packages:
+      - nmap
+      - wireshark
+      - metasploit-framework
+      - burpsuite
+      - hydra
+      - john
+      - sqlmap
+      - gobuster
+      - ffuf
+      - dirb
+      - nikto
+      - netcat-openbsd
+      - tcpdump
+      - aircrack-ng
+      - reaver
+      - bettercap
+      - exploitdb
+      - hashcat
+      - hashcat-utils
+      - ocl-icd-libopencl1
+      - python3-scapy
+      - python3-impacket
+      - python3-dnspython
+      - proxychains4
+      - tor
+      - foremost
+      - binutils
+      - patchelf
+      - strace
+      - ltrace
+      - gdb
+      - radare2
+
+  - family: ubuntu
+    packages:
+      - nmap
+      - wireshark
+      - hydra
+      - john
+      - sqlmap
+      - gobuster
+      - ffuf
+      - dirb
+      - nikto
+      - netcat-openbsd
+      - tcpdump
+      - aircrack-ng
+      - reaver
+      - hashcat
+      - python3-scapy
+      - python3-impacket
+      - proxychains4
+      - tor
+      - foremost
+      - binutils
+      - strace
+      - ltrace
+      - gdb
+      - radare2
+
+  - family: arch
+    packages:
+      - nmap
+      - wireshark-cli
+      - wireshark-qt
+      - metasploit
+      - hydra
+      - john
+      - sqlmap
+      - gobuster
+      - ffuf
+      - dirb
+      - nikto
+      - netcat
+      - tcpdump
+      - aircrack-ng
+      - bettercap
+      - exploitdb
+      - hashcat
+      - hashcat-utils
+      - opencl-headers
+      - python-scapy
+      - python-impacket
+      - proxychains-ng
+      - tor
+      - foremost
+      - binutils
+      - patchelf
+      - strace
+      - ltrace
+      - gdb
+      - radare2
+
+  - family: fedora
+    packages:
+      - nmap
+      - wireshark
+      - hydra
+      - john
+      - sqlmap
+      - nikto
+      - netcat
+      - tcpdump
+      - aircrack-ng
+      - hashcat
+      - python3-scapy
+      - python3-impacket
+      - proxychains
+      - tor
+      - foremost
+      - binutils
+      - strace
+      - ltrace
+      - gdb
+      - radare2
+
+  - family: alpine
+    packages:
+      - nmap
+      - wireshark
+      - hydra
+      - john
+      - sqlmap
+      - netcat-openbsd
+      - tcpdump
+      - aircrack-ng
+      - hashcat
+      - py3-scapy
+      - proxychains-ng
+      - tor
+      - foremost
+      - binutils
+      - strace
+      - gdb
+      - radare2
+
+env:
+  EDITOR: vim
+  NEXUS_PROFILE: ethical-hacker

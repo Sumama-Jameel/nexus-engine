@@ -47,11 +47,11 @@ type RegistryProfile struct {
 // communityRegistryURL is the base URL for the community registry index.
 // The registry index is a JSON file that lists all available profiles with
 // their metadata. Each profile's YAML is fetched individually from the
-// nexus-profiles repository on GitHub.
-const communityRegistryURL = "https://raw.githubusercontent.com/Sumama-Jameel/nexus-profiles/main/registry.json"
+// profiles/ directory in this repository on GitHub.
+const communityRegistryURL = "https://raw.githubusercontent.com/Sumama-Jameel/nexus-engine/main/profiles/registry.json"
 
 // profileBaseURL is used to construct individual profile download URLs.
-const profileBaseURL = "https://raw.githubusercontent.com/Sumama-Jameel/nexus-profiles/main/profiles"
+const profileBaseURL = "https://raw.githubusercontent.com/Sumama-Jameel/nexus-engine/main/profiles"
 
 // registryHTTPClient is an HTTP client using the SSRF-safe transport.
 // Reused across calls to avoid connection churn.
@@ -198,7 +198,7 @@ func FetchRegistryProfile(ctx context.Context, name string) ([]byte, error) {
 }
 
 // SubmitProfile validates a local profile YAML and returns a submission URL
-// pointing to the nexus-profiles repository where the user can create a PR.
+// pointing to the profile directory in this repository where the user can add a PR.
 func SubmitProfile(data []byte) (string, error) {
 	if len(data) == 0 {
 		return "", fmt.Errorf("profile data is empty")
@@ -213,11 +213,13 @@ func SubmitProfile(data []byte) (string, error) {
 	digest := fmt.Sprintf("%x", sha256.Sum256(data))
 
 	instructions := fmt.Sprintf(
-		"https://github.com/Sumama-Jameel/nexus-profiles/new/main/profiles\n\n"+
-			"Submit your profile via pull request at:\n"+
-			"  https://github.com/Sumama-Jameel/nexus-profiles\n\n"+
-			"Profile SHA256: %s\n"+
-			"Place your .yaml file in the profiles/ directory and update registry.json.",
+		"Submit your profile via pull request at:\n"+
+			"  https://github.com/Sumama-Jameel/nexus-engine\n\n"+
+			"To add your profile:\n"+
+			"  1. Place your .yaml file in the profiles/ directory\n"+
+			"  2. Add an entry to profiles/registry.json\n"+
+			"  3. Open a pull request\n\n"+
+			"Profile SHA256: %s\n",
 		digest,
 	)
 
