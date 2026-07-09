@@ -40,8 +40,9 @@ That is it. That is the whole thing.
 ## Quick Start
 
 ```bash
-# Install
+# Install (choose one)
 go install github.com/Sumama-Jameel/nexus-engine/cmd/nexus@latest
+# -- or download a binary from https://github.com/Sumama-Jameel/nexus-engine/releases
 
 # Initialize your environment
 nexus init
