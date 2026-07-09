@@ -1,0 +1,14 @@
+# V11 built-in mode: gamer
+# Loaded from //go:embed in internal/mode/mode.go
+# Override per-machine by placing a file with the same name in ~/.nexus/modes/.
+name: gamer
+description: Gaming — stop heavy services, prioritize CPU/GPU
+profile: base-gamer
+dotfiles_source: ""
+stop_services: [podman, docker]
+start_services: []
+os_tweaks:
+  linux:
+    cpu_governor: performance
+  windows:
+    power_plan: high_performance

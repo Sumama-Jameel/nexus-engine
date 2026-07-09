@@ -1,0 +1,58 @@
+# Nexus Profile: Gaming Environment (NVIDIA Edition)
+# Designed for NVIDIA GPUs on Pop!_OS. Extends base-gamer with NVIDIA drivers.
+name: base-gamer-nvidia
+version: "1.0.0"
+description: "Gaming environment for NVIDIA GPUs — Steam, Lutris, NVIDIA drivers, CUDA"
+author: nexus-core
+extends: base-gamer
+suggested_distro: pop-os
+wsl_available: false
+
+targets:
+  - family: debian
+    packages:
+      - nvidia-driver
+      - nvidia-settings
+      - nvidia-prime
+      - cuda
+      - cuda-toolkit
+      - libnvidia-encode1
+      - libnvidia-decode1
+
+  - family: ubuntu
+    packages:
+      - nvidia-driver-550
+      - nvidia-settings
+      - nvidia-prime
+      - nvidia-cuda-toolkit
+      - libnvidia-encode-550
+      - libnvidia-decode-550
+
+  - family: arch
+    packages:
+      - nvidia
+      - nvidia-settings
+      - nvidia-prime
+      - cuda
+      - lib32-nvidia-utils
+      - opencl-nvidia
+
+  - family: fedora
+    packages:
+      - akmod-nvidia
+      - xorg-x11-drv-nvidia
+      - nvidia-settings
+      - nvidia-prime
+      - cuda
+      - nvidia-gpu-firmware
+
+  - family: alpine
+    packages:
+      - nvidia-driver
+      - nvidia-settings
+      - nvidia-cuda
+
+env:
+  __GL_SHADER_DISK_CACHE_SKIP: "0"
+  __GL_SHADER_DISK_CACHE_PATH: "$HOME/.cache/nvidia"
+  NEXUS_PROFILE: base-gamer-nvidia

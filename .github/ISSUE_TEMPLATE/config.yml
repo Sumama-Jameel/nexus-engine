@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/Sumama-Jameel/nexus-engine#readme
+    about: Check the README for usage instructions and command reference.
+  - name: Security Issue
+    url: https://github.com/Sumama-Jameel/nexus-engine/security/policy
+    about: Report security vulnerabilities through our responsible disclosure process. Do NOT file public issues for security bugs.
+  - name: Discussion
+    url: https://github.com/Sumama-Jameel/nexus-engine/discussions
+    about: Ask questions, share ideas, or discuss Nexus Protocol with the community.

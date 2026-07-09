@@ -1,0 +1,64 @@
+# Nexus Profile: Gaming Environment (AMD Edition)
+# Designed for AMD GPUs on Pop!_OS. Extends base-gamer with AMD drivers.
+name: base-gamer-amd
+version: "1.0.0"
+description: "Gaming environment for AMD GPUs — Steam, Lutris, AMD drivers, ROCm"
+author: nexus-core
+extends: base-gamer
+suggested_distro: pop-os
+wsl_available: false
+
+targets:
+  - family: debian
+    packages:
+      - mesa-utils
+      - mesa-vulkan-drivers
+      - libgl1-mesa-dri
+      - radeontop
+      - radeonsi
+      - rocm-opencl-runtime
+      - rocm-device-libs
+
+  - family: ubuntu
+    packages:
+      - mesa-utils
+      - mesa-vulkan-drivers
+      - libgl1-mesa-dri
+      - radeontop
+      - mesa-amdgpu
+      - rocm-opencl-runtime
+      - rocm-device-libs
+
+  - family: arch
+    packages:
+      - mesa
+      - lib32-mesa
+      - mesa-vulkan-drivers
+      - lib32-mesa-vulkan-drivers
+      - radeontop
+      - rocm-opencl-runtime
+      - rocm-hip-runtime
+      - rocm-llvm
+
+  - family: fedora
+    packages:
+      - mesa-dri-drivers
+      - mesa-vulkan-drivers
+      - mesa-libGL
+      - mesa-libGL.i686
+      - radeontop
+      - rocm-opencl
+      - rocm-hip
+
+  - family: alpine
+    packages:
+      - mesa-dri-gallium
+      - mesa-vulkan-drivers
+      - mesa-utils
+      - radeontop
+      - rocm-opencl-runtime
+
+env:
+  RADV_PERFTEST: ac
+  AMD_VULKAN_ICD: RADV
+  NEXUS_PROFILE: base-gamer-amd

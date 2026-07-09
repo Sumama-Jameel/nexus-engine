@@ -1,0 +1,15 @@
+# Build artifacts
+src-tauri/target/
+# Cargo.lock is tracked (Rust application binary)
+src-tauri/gen/
+
+# Tauri generated
+src-tauri/WixTools/
+
+# Node (if added later)
+node_modules/
+package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db

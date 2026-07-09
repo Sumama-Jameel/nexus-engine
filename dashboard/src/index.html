@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="header-left">
+                <h1>Nexus Dashboard</h1>
+                <span class="version" id="version-display">v0.12.0</span>
+                <span class="header-mode-badge" id="header-mode-badge" title="Active mode">
+                    <span class="mode-dot"></span>
+                    <span class="mode-name">no mode</span>
+                </span>
+            </div>
+            <div class="header-right">
+                <span class="status-dot" id="status-dot"></span>
+                <span class="status-text" id="status-text">Ready</span>
+                <button id="refresh-btn" class="btn btn-secondary">Refresh</button>
+            </div>
+        </header>
+
+        <nav class="tabs" id="tabs">
+            <button class="tab active" data-tab="sync">Sync</button>
+            <button class="tab" data-tab="vault">Vault</button>
+            <button class="tab" data-tab="system">System</button>
+            <button class="tab" data-tab="modes">Modes</button>
+            <button class="tab" data-tab="containers">Containers</button>
+            <button class="tab" data-tab="registry">Registry</button>
+        </nav>
+
+        <div id="error-bar" class="error-bar hidden">
+            <span id="error-text"></span>
+            <button class="error-dismiss" id="error-dismiss">&times;</button>
+        </div>
+
+        <main id="content">
+            <div class="loading">Loading nexus state...</div>
+        </main>
+
+        <div class="modal-backdrop hidden" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+            <div class="modal">
+                <h2 id="confirm-modal-title">Confirm</h2>
+                <div id="confirm-modal-body" class="modal-body"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="confirm-cancel">Cancel</button>
+                    <button class="btn" id="confirm-apply">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

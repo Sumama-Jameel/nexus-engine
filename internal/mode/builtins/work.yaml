@@ -1,0 +1,14 @@
+# V11 built-in mode: work
+# Loaded from //go:embed in internal/mode/mode.go
+# Override per-machine by placing a file with the same name in ~/.nexus/modes/.
+name: work
+description: Focused work — minimal services, balanced power
+profile: base-work
+dotfiles_source: ""
+stop_services: []
+start_services: [sshd]
+os_tweaks:
+  linux:
+    cpu_governor: balanced
+  windows:
+    power_plan: balanced

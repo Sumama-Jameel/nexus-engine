@@ -1,0 +1,99 @@
+# Nexus Profile: Work Environment
+# Focused, minimal setup for office/productivity — no dev tools.
+name: base-work
+version: "1.0.0"
+description: "Focused work environment — office tools, communication, minimal footprint"
+author: nexus-core
+suggested_distro: ubuntu
+wsl_available: true
+
+targets:
+  - family: debian
+    packages:
+      - htop
+      - tmux
+      - curl
+      - wget
+      - git
+      - vim
+      - zsh
+      - unzip
+      - ca-certificates
+      - gnupg
+      - libreoffice-writer
+      - libreoffice-calc
+      - libreoffice-impress
+      - thunderbird
+      - keepassxc
+
+  - family: ubuntu
+    packages:
+      - htop
+      - tmux
+      - curl
+      - wget
+      - git
+      - vim
+      - zsh
+      - unzip
+      - ca-certificates
+      - gnupg
+      - libreoffice-writer
+      - libreoffice-calc
+      - libreoffice-impress
+      - thunderbird
+      - keepassxc
+
+  - family: arch
+    packages:
+      - htop
+      - tmux
+      - curl
+      - wget
+      - git
+      - vim
+      - zsh
+      - unzip
+      - ca-certificates
+      - gnupg
+      - libreoffice-fresh
+      - thunderbird
+      - keepassxc
+
+  - family: fedora
+    packages:
+      - htop
+      - tmux
+      - curl
+      - wget
+      - git
+      - vim-enhanced
+      - zsh
+      - unzip
+      - ca-certificates
+      - gnupg2
+      - libreoffice-writer
+      - libreoffice-calc
+      - libreoffice-impress
+      - thunderbird
+      - keepassxc
+
+  - family: alpine
+    packages:
+      - htop
+      - tmux
+      - curl
+      - wget
+      - git
+      - vim
+      - zsh
+      - unzip
+      - ca-certificates
+      - gnupg
+      - libreoffice
+      - thunderbird
+      - keepassxc
+
+env:
+  EDITOR: vim
+  NEXUS_PROFILE: base-work

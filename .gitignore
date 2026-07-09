@@ -1,0 +1,44 @@
+# Nexus Protocol — .gitignore
+# V7: "The Chezmoi Integration (The Memory)"
+# Committed binaries are distributed via GitHub Releases (GoReleaser), not source control.
+
+# Built binaries
+nexus
+nexus-*
+*.exe
+
+# GoReleaser output
+dist/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Go test artifacts
+coverage.out
+coverage.html
+cov*.out
+coverage_*.out
+coverage-*.out
+coverage_before.out
+coverage_after.out
+coverage_baseline.out
+coverage_preflight.out
+coverage_final.out
+
+# Rust / Tauri build artifacts
+dashboard/src-tauri/target/
+
+# Local development
+.env
+.env.local
+
+
