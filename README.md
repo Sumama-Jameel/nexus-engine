@@ -20,6 +20,24 @@ You can write your own profile, pick from 8 built-in profiles (developer, gamer,
 
 ---
 
+## What We Need
+
+Yeah you.
+
+Nexus is just a binary. What makes it hit is the squad behind it. We need you to drop profiles, tweak manifests, and tell your people about it. Got a sick dev setup? Wrap it as a profile and toss it in the registry. Running something jank? Open an issue. Windows user tired of fighting your own machine? Nexus is your way in. One binary, one command, and you are coding on Linux before the coffee brews.
+
+Linux grows when we make it easy. Not just for the graybeards. For everyone. The Windows kid who wants to learn. The gamer who needs Steam plus Vulkan without the headache. The homie who just wants apt to work and go home.
+
+So here is the play:
+- Fork the repo.
+- Add your profile or fix someone else's.
+- Push it up.
+- Tell a friend.
+
+That is it. That is the whole thing.
+
+---
+
 ## Quick Start
 
 ```bash
