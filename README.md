@@ -44,6 +44,9 @@ That is it. That is the whole thing.
 go install github.com/Sumama-Jameel/nexus-engine/cmd/nexus@latest
 # -- or download a binary from https://github.com/Sumama-Jameel/nexus-engine/releases
 
+# Verify integrity
+sha256sum -c checksums.txt
+
 # Initialize your environment
 nexus init
 ```
