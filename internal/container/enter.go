@@ -17,8 +17,6 @@ package container
 import (
 	"context"
 	"fmt"
-
-	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 )
 
 // EnterCommand returns the shell command to enter a container.
@@ -27,7 +25,7 @@ import (
 // paste it into their own terminal, or the CLI can print it.
 //
 // The state tracker records the "last entered" time for visibility.
-func EnterCommand(name string, state *engine.StateTracker) (string, error) {
+func EnterCommand(name string, state StateTracker) (string, error) {
 	if err := validateName(name); err != nil {
 		return "", err
 	}

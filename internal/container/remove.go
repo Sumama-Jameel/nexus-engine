@@ -17,8 +17,6 @@ package container
 import (
 	"context"
 	"fmt"
-
-	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 )
 
 // RemoveOpts controls the remove operation.
@@ -36,7 +34,7 @@ type RemoveReport struct {
 // Remove deletes a Distrobox container. Gated on the container being
 // Nexus-managed (i.e., present in state). Use --force to skip this
 // check for containers created outside Nexus.
-func Remove(ctx context.Context, deps *engine.StateTracker, execFn ExecFunc, name string, opts RemoveOpts) (*RemoveReport, error) {
+func Remove(ctx context.Context, deps StateTracker, execFn ExecFunc, name string, opts RemoveOpts) (*RemoveReport, error) {
 	if execFn == nil {
 		return nil, fmt.Errorf("container: ExecFn must not be nil (Zero-Trust)")
 	}
@@ -59,10 +57,9 @@ func Remove(ctx context.Context, deps *engine.StateTracker, execFn ExecFunc, nam
 }
 
 // IsManaged checks if a container is tracked in Nexus state.
-func IsManaged(state *engine.StateTracker, name string) bool {
+func IsManaged(state StateTracker, name string) bool {
 	if state == nil {
 		return false
 	}
-	_, ok := state.GetContainers()[name]
-	return ok
+	return state.IsContainerManaged(name)
 }

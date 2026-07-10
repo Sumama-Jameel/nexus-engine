@@ -282,8 +282,11 @@ func NewStateTracker() (*StateTracker, error) {
         nexusDir := filepath.Join(homeDir, ".nexus")
         os.MkdirAll(nexusDir, 0755)
 
-        path := filepath.Join(nexusDir, "state.json")
-        tracker := &StateTracker{path: path}
+	path := filepath.Join(nexusDir, "state.json")
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		path = resolved
+	}
+	tracker := &StateTracker{path: path}
 
         // Load existing state or create new
         if data, err := os.ReadFile(path); err == nil {
@@ -731,6 +734,17 @@ func (s *StateTracker) GetContainers() map[string]ContainerState {
 		result[k] = v
 	}
 	return result
+}
+
+// GetContainerNames returns the names of all managed containers.
+func (s *StateTracker) GetContainerNames() []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	names := make([]string, 0, len(s.state.Containers))
+	for name := range s.state.Containers {
+		names = append(names, name)
+	}
+	return names
 }
 
 // IsContainerManaged checks if a container is tracked in state.

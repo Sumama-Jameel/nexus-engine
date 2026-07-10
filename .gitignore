@@ -3,11 +3,11 @@
 # Committed binaries are distributed via GitHub Releases (GoReleaser), not source control.
 
 # Built binaries
-nexus
-nexus-*
-!nexus-*.json
-!nexus-*.yaml
-!nexus-*.yml
+/nexus
+/nexus-*
+!/nexus-*.json
+!/nexus-*.yaml
+!/nexus-*.yml
 *.exe
 
 # GoReleaser output

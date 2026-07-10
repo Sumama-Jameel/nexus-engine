@@ -22,6 +22,19 @@ import (
 	"time"
 )
 
+// StateTracker defines the subset of state operations needed by the container
+// package. Using this interface instead of a concrete engine.StateTracker
+// prevents circular imports and enables testing with mocks.
+type StateTracker interface {
+	RecordContainerEnter(name string) error
+	RecordContainerRemove(name string) error
+	RecordContainerCreate(name, image, family string) error
+	IsContainerManaged(name string) bool
+	GetContainerNames() []string
+}
+
+
+
 // Container records a Nexus-managed Distrobox container. Every field is
 // validated before being persisted — tampered state files fail on load.
 type Container struct {

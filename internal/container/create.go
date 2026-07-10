@@ -28,7 +28,7 @@ type ExecFunc = func(ctx context.Context, command string, args ...string) (strin
 // CreateDeps holds dependencies for the Create operation.
 type CreateDeps struct {
 	ExecFn ExecFunc
-	State  *engine.StateTracker
+	State  StateTracker
 	Audit  *engine.AuditLogger
 }
 

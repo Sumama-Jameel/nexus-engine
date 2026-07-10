@@ -18,8 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 )
 
 // AppsReport is the structured result of listing apps inside a container.
@@ -32,7 +30,7 @@ type AppsReport struct {
 
 // Apps lists applications installed inside a Distrobox container.
 // Returns the list of host-integrated apps that were exported.
-func Apps(ctx context.Context, state *engine.StateTracker, execFn ExecFunc, name string) (*AppsReport, error) {
+func Apps(ctx context.Context, state StateTracker, execFn ExecFunc, name string) (*AppsReport, error) {
 	if err := validateName(name); err != nil {
 		return nil, err
 	}

@@ -74,10 +74,13 @@ func NewAuditLogger() (*AuditLogger, error) {
         nexusDir := filepath.Join(homeDir, ".nexus")
         os.MkdirAll(nexusDir, 0755)
 
-        path := filepath.Join(nexusDir, "audit.log")
+	path := filepath.Join(nexusDir, "audit.log")
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		path = resolved
+	}
 
-        // Open with O_APPEND and O_CREATE — append-only, create if missing
-        file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// Open with O_APPEND and O_CREATE — append-only, create if missing
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
         if err != nil {
                 return nil, fmt.Errorf("failed to open audit log: %w", err)
         }
@@ -124,8 +127,11 @@ func ReadAuditLog(n int) ([]AuditEntry, error) {
                 return nil, err
         }
 
-        path := filepath.Join(homeDir, ".nexus", "audit.log")
-        data, err := os.ReadFile(path)
+	path := filepath.Join(homeDir, ".nexus", "audit.log")
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		path = resolved
+	}
+	data, err := os.ReadFile(path)
         if err != nil {
                 if os.IsNotExist(err) {
                         return []AuditEntry{}, nil

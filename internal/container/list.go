@@ -18,8 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 )
 
 // ListReport is the structured result of `container list`.
@@ -39,7 +37,7 @@ type ContainerInfo struct {
 
 // List returns all Distrobox containers, annotated with managed status.
 // Filters to containers Nexus actually manages via state.
-func List(ctx context.Context, state *engine.StateTracker, execFn ExecFunc) (*ListReport, error) {
+func List(ctx context.Context, state StateTracker, execFn ExecFunc) (*ListReport, error) {
 	if execFn == nil {
 		return nil, fmt.Errorf("container: ExecFn must not be nil (Zero-Trust)")
 	}
@@ -62,7 +60,7 @@ func List(ctx context.Context, state *engine.StateTracker, execFn ExecFunc) (*Li
 
 	managed := make(map[string]bool)
 	if state != nil {
-		for name := range state.GetContainers() {
+		for _, name := range state.GetContainerNames() {
 			managed[name] = true
 		}
 	}
@@ -83,7 +81,7 @@ func List(ctx context.Context, state *engine.StateTracker, execFn ExecFunc) (*Li
 }
 
 // Info returns a single container's detail, including managed status.
-func Info(ctx context.Context, state *engine.StateTracker, execFn ExecFunc, name string) (*ContainerInfo, error) {
+func Info(ctx context.Context, state StateTracker, execFn ExecFunc, name string) (*ContainerInfo, error) {
 	if err := validateName(name); err != nil {
 		return nil, err
 	}
