@@ -61,15 +61,15 @@ func TestValidateURL_SSH_HappyPath(t *testing.T) {
 
 func TestValidateURL_RejectsNonHTTPSOrSSH(t *testing.T) {
 	cases := []string{
-		"http://example.com",                // plain http
-		"ftp://example.com/file",            // ftp
-		"file:///etc/passwd",                // local file
-		"javascript:alert(1)",               // javascript scheme
-		"data:text/plain,hello",             // data URL
-		"ws://example.com",                  // websocket
-		"wss://example.com",                 // websocket secure (not in allowlist)
-		"",                                  // empty
-		"not-a-url",                         // garbage
+		"http://example.com",     // plain http
+		"ftp://example.com/file", // ftp
+		"file:///etc/passwd",     // local file
+		"javascript:alert(1)",    // javascript scheme
+		"data:text/plain,hello",  // data URL
+		"ws://example.com",       // websocket
+		"wss://example.com",      // websocket secure (not in allowlist)
+		"",                       // empty
+		"not-a-url",              // garbage
 	}
 	for _, u := range cases {
 		t.Run(u, func(t *testing.T) {
@@ -221,14 +221,14 @@ func TestValidateURLAgainstHosts_PropagatesValidateURLErrors(t *testing.T) {
 
 func TestIsPrivateIP_Private(t *testing.T) {
 	cases := []string{
-		"10.0.0.1",         // RFC 1918 (10/8)
-		"172.16.5.4",       // RFC 1918 (172.16/12)
-		"192.168.1.1",      // RFC 1918 (192.168/16)
-		"127.0.0.1",        // loopback
-		"169.254.169.254",  // AWS metadata / link-local
-		"::1",              // IPv6 loopback
-		"fc00::1",          // IPv6 unique local
-		"fe80::1",          // IPv6 link-local
+		"10.0.0.1",        // RFC 1918 (10/8)
+		"172.16.5.4",      // RFC 1918 (172.16/12)
+		"192.168.1.1",     // RFC 1918 (192.168/16)
+		"127.0.0.1",       // loopback
+		"169.254.169.254", // AWS metadata / link-local
+		"::1",             // IPv6 loopback
+		"fc00::1",         // IPv6 unique local
+		"fe80::1",         // IPv6 link-local
 	}
 	for _, ip := range cases {
 		t.Run(ip, func(t *testing.T) {
@@ -245,9 +245,9 @@ func TestIsPrivateIP_Private(t *testing.T) {
 
 func TestIsPrivateIP_Public(t *testing.T) {
 	cases := []string{
-		"8.8.8.8",         // Google DNS
-		"1.1.1.1",         // Cloudflare DNS
-		"93.184.216.34",   // example.com (historical)
+		"8.8.8.8",              // Google DNS
+		"1.1.1.1",              // Cloudflare DNS
+		"93.184.216.34",        // example.com (historical)
 		"2606:4700:4700::1111", // Cloudflare DNS IPv6
 		"2001:4860:4860::8888", // Google DNS IPv6
 	}
@@ -328,27 +328,32 @@ func TestNewSSRFSafeTransport_UsedAsRoundTripper(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// PrivateRanges — sanity check the init() function didn't silently break
+// PrivateRanges — sanity check via IsPrivateIP (delegates to netutil)
 // ---------------------------------------------------------------------------
 
 func TestPrivateRanges_Populated(t *testing.T) {
-	if len(privateRanges) < 5 {
-		t.Errorf("privateRanges should have at least 5 entries (IPv4 + IPv6), got %d", len(privateRanges))
+	// Verify IsPrivateIP detects known private IPs, confirming
+	// the CIDR ranges were loaded correctly in netutil.init().
+	testCases := []struct {
+		ip   string
+		want bool
+	}{
+		{"10.0.0.1", true},
+		{"172.16.0.1", true},
+		{"192.168.1.1", true},
+		{"127.0.0.1", true},
+		{"169.254.0.1", true},
+		{"8.8.8.8", false},
+		{"1.1.1.1", false},
 	}
-}
-
-func TestPrivateRanges_AllValidCIDRs(t *testing.T) {
-	// Every entry must be a valid CIDR network.
-	for i, n := range privateRanges {
-		if n == nil {
-			t.Errorf("privateRanges[%d] is nil", i)
-			continue
+	for _, tc := range testCases {
+		ip := net.ParseIP(tc.ip)
+		if ip == nil {
+			t.Fatalf("failed to parse IP %s", tc.ip)
 		}
-		if n.IP == nil {
-			t.Errorf("privateRanges[%d] has nil IP", i)
-		}
-		if n.Mask == nil {
-			t.Errorf("privateRanges[%d] has nil Mask", i)
+		got := IsPrivateIP(ip)
+		if got != tc.want {
+			t.Errorf("IsPrivateIP(%s) = %v, want %v", tc.ip, got, tc.want)
 		}
 	}
 }

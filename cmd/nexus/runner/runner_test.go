@@ -428,8 +428,6 @@ func TestInstallPackages_WithError(t *testing.T) {
 // ResolveProfilePackages — with a real profile store
 // ---------------------------------------------------------------------------
 
-
-
 func TestResolveProfilePackages_Success(t *testing.T) {
 	deps := createTestDependencies(t)
 	store, err := createTestProfileStore(t, "test-profile", `name: test-profile
@@ -507,8 +505,6 @@ targets:
 		t.Fatal("expected non-nil result")
 	}
 }
-
-
 
 func TestApplyProfile_LoadError(t *testing.T) {
 	deps := createTestDependencies(t)

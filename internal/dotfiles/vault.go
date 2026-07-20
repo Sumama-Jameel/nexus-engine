@@ -107,17 +107,17 @@ type VaultUnlockDeps struct {
 // VaultReport is the structured result of any vault operation. Fields
 // are populated best-effort depending on the operation.
 type VaultReport struct {
-	Operation     string             `json:"operation"`
-	PublicKey     string             `json:"public_key,omitempty"`
-	PublicKeyShort string            `json:"public_key_short,omitempty"`
-	KeyPath       string             `json:"key_path,omitempty"`
-	KeyringID     string             `json:"keyring_id,omitempty"`
-	EncryptedPath string             `json:"encrypted_path,omitempty"`
-	OriginalPath  string             `json:"original_path,omitempty"`
-	Files         []VaultFileEntry   `json:"files,omitempty"`
-	Status        *VaultStatusReport `json:"status,omitempty"`
-	StartedAt     time.Time          `json:"started_at"`
-	CompletedAt   time.Time          `json:"completed_at"`
+	Operation      string             `json:"operation"`
+	PublicKey      string             `json:"public_key,omitempty"`
+	PublicKeyShort string             `json:"public_key_short,omitempty"`
+	KeyPath        string             `json:"key_path,omitempty"`
+	KeyringID      string             `json:"keyring_id,omitempty"`
+	EncryptedPath  string             `json:"encrypted_path,omitempty"`
+	OriginalPath   string             `json:"original_path,omitempty"`
+	Files          []VaultFileEntry   `json:"files,omitempty"`
+	Status         *VaultStatusReport `json:"status,omitempty"`
+	StartedAt      time.Time          `json:"started_at"`
+	CompletedAt    time.Time          `json:"completed_at"`
 }
 
 // VaultFileEntry maps an original filesystem path to its encrypted
@@ -130,15 +130,15 @@ type VaultFileEntry struct {
 
 // VaultStatusReport is the structured status snapshot.
 type VaultStatusReport struct {
-	Initialized   bool   `json:"initialized"`
+	Initialized    bool   `json:"initialized"`
 	PublicKeyShort string `json:"public_key_short,omitempty"`
-	KeyPath       string `json:"key_path,omitempty"`
-	KeyExists     bool   `json:"key_exists"`
-	KeyPermOK     bool   `json:"key_perm_ok"`
-	KeyringID     string `json:"keyring_id,omitempty"`
-	KeyringOK     bool   `json:"keyring_ok"`
-	FileCount     int    `json:"file_count"`
-	CreatedAt     string `json:"created_at,omitempty"`
+	KeyPath        string `json:"key_path,omitempty"`
+	KeyExists      bool   `json:"key_exists"`
+	KeyPermOK      bool   `json:"key_perm_ok"`
+	KeyringID      string `json:"keyring_id,omitempty"`
+	KeyringOK      bool   `json:"keyring_ok"`
+	FileCount      int    `json:"file_count"`
+	CreatedAt      string `json:"created_at,omitempty"`
 }
 
 // ─── VaultInit ─────────────────────────────────────────────────────────────
@@ -237,10 +237,10 @@ func VaultInit(ctx context.Context, deps VaultInitDeps) (*VaultReport, error) {
 	}
 
 	// Audit (public key fingerprint only — never the private key).
-		logAudit(deps.Audit, "DOTFILES_VAULT_INIT", "success", engine.ShortKeyFingerprint(publicKey))
+	logAudit(deps.Audit, "DOTFILES_VAULT_INIT", "success", engine.ShortKeyFingerprint(publicKey))
 
-		report.PublicKey = publicKey
-		report.PublicKeyShort = engine.ShortKeyFingerprint(publicKey)
+	report.PublicKey = publicKey
+	report.PublicKeyShort = engine.ShortKeyFingerprint(publicKey)
 	report.KeyPath = keyPath
 	report.KeyringID = keyringID
 	report.CompletedAt = time.Now().UTC()
@@ -371,11 +371,11 @@ func VaultStatus(deps struct {
 
 	vs := deps.State.GetVaultState()
 	status := &VaultStatusReport{
-		Initialized:   vs.Initialized,
+		Initialized:    vs.Initialized,
 		PublicKeyShort: vs.PublicKeyShort,
-		KeyPath:       vs.KeyPath,
-		KeyringID:     vs.KeyringID,
-		FileCount:     len(vs.EncryptedFiles),
+		KeyPath:        vs.KeyPath,
+		KeyringID:      vs.KeyringID,
+		FileCount:      len(vs.EncryptedFiles),
 	}
 
 	if vs.Initialized {
@@ -434,10 +434,10 @@ func VaultUnlock(ctx context.Context, deps VaultUnlockDeps) (*VaultReport, error
 	}
 
 	report := &VaultReport{
-		Operation:  "unlock",
-		KeyPath:    filepath.Join(VaultDir(), PrivateKeyName),
-		KeyringID:  vs.KeyringID,
-		StartedAt:  time.Now().UTC(),
+		Operation: "unlock",
+		KeyPath:   filepath.Join(VaultDir(), PrivateKeyName),
+		KeyringID: vs.KeyringID,
+		StartedAt: time.Now().UTC(),
 	}
 
 	// Step 1: load the key.
@@ -471,7 +471,22 @@ func VaultUnlock(ctx context.Context, deps VaultUnlockDeps) (*VaultReport, error
 	}
 	tmpCipher.Close()
 
-	decrypted, err := deps.ExecFn(ctx, "age", "-d", "-i", "/dev/stdin", tmpCipher.Name())
+	// Write the private key to a temp file for age to read.
+	// We cannot use /dev/stdin because the key is not piped to stdin.
+	tmpKey, err := os.CreateTemp("", "nexus-vault-key-*.key")
+	if err != nil {
+		return nil, fmt.Errorf("verification: failed to create temp key file: %w", err)
+	}
+	defer os.Remove(tmpKey.Name())
+	if _, err := tmpKey.WriteString(keyData + "\n"); err != nil {
+		return nil, fmt.Errorf("verification: failed to write temp key file: %w", err)
+	}
+	tmpKey.Close()
+	if err := os.Chmod(tmpKey.Name(), 0o600); err != nil {
+		return nil, fmt.Errorf("verification: failed to set temp key permissions: %w", err)
+	}
+
+	decrypted, err := deps.ExecFn(ctx, "age", "-d", "-i", tmpKey.Name(), tmpCipher.Name())
 	if err != nil {
 		return nil, fmt.Errorf("verification: failed to decrypt with provided key (wrong key for this vault?): %w", err)
 	}
@@ -638,10 +653,10 @@ func VaultRemove(ctx context.Context, target string, deps VaultRemoveDeps) (*Vau
 	}
 
 	report := &VaultReport{
-		Operation:    "remove",
-		OriginalPath: target,
+		Operation:     "remove",
+		OriginalPath:  target,
 		EncryptedPath: encryptedPath,
-		StartedAt:    time.Now().UTC(),
+		StartedAt:     time.Now().UTC(),
 	}
 
 	// Prompt for confirmation unless --force.

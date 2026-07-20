@@ -15,16 +15,17 @@
 package manifest
 
 import (
-        "bytes"
-        "embed"
-        "encoding/json"
-        "fmt"
-        "os"
-        "strings"
+	"bytes"
+	"embed"
+	"encoding/json"
+	"fmt"
+	"os"
+	"sort"
+	"strings"
 
-        "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 
-        "github.com/xeipuuv/gojsonschema"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 //go:embed schemas/nexus-profile.schema.json
@@ -43,16 +44,16 @@ var schemaFS embed.FS
 // inherit and augment the packages of a parent profile. Resolution is
 // performed by ResolveExtends with cycle detection and depth limiting.
 type NexusProfile struct {
-	Name           string            `yaml:"name"`
-	Version        string            `yaml:"version"`
-	Description    string            `yaml:"description"`
-	Author         string            `yaml:"author"`
-	Extends        string            `yaml:"extends,omitempty"`
-	Targets        []TargetConfig    `yaml:"targets"`
-	Env            map[string]string `yaml:"env"`
-	Dotfiles       *DotfilesSpec     `yaml:"dotfiles,omitempty"`
-	SuggestedDistro string           `yaml:"suggested_distro,omitempty"`
-	WSL2Available   bool             `yaml:"wsl_available,omitempty"`
+	Name            string            `yaml:"name"`
+	Version         string            `yaml:"version"`
+	Description     string            `yaml:"description"`
+	Author          string            `yaml:"author"`
+	Extends         string            `yaml:"extends,omitempty"`
+	Targets         []TargetConfig    `yaml:"targets"`
+	Env             map[string]string `yaml:"env"`
+	Dotfiles        *DotfilesSpec     `yaml:"dotfiles,omitempty"`
+	SuggestedDistro string            `yaml:"suggested_distro,omitempty"`
+	WSL2Available   bool              `yaml:"wsl_available,omitempty"`
 }
 
 // DotfilesSpec declares the V7 dotfile-management intent for a profile.
@@ -82,8 +83,8 @@ type DotfilesSpec struct {
 // shell commands are permitted. This is enforced by the JSON Schema
 // (pattern restrictions) and the semantic validation layer.
 type TargetConfig struct {
-        Family   string   `yaml:"family"`   // e.g., "debian", "arch", "fedora", "alpine"
-        Packages []string `yaml:"packages"` // ONLY package names — no scripts allowed
+	Family   string   `yaml:"family"`   // e.g., "debian", "arch", "fedora", "alpine"
+	Packages []string `yaml:"packages"` // ONLY package names — no scripts allowed
 }
 
 // AllowedPackageFamilies defines the only permitted package families for
@@ -97,12 +98,12 @@ type TargetConfig struct {
 // safely translate each family to its known, safe command without risk of
 // executing arbitrary programs.
 var AllowedPackageFamilies = map[string]bool{
-        "debian": true, // apt-get
-        "arch":   true, // pacman
-        "fedora": true, // dnf
-        "alpine": true, // apk
-        "ubuntu": true, // apt-get
-        "linux":  true, // generic (all families)
+	"debian": true, // apt-get
+	"arch":   true, // pacman
+	"fedora": true, // dnf
+	"alpine": true, // apk
+	"ubuntu": true, // apt-get
+	"linux":  true, // generic (all families)
 }
 
 // MaxExtendsDepth is the maximum allowed depth for profile extends chains.
@@ -114,8 +115,8 @@ const MaxExtendsDepth = 5
 
 // Parse reads a Nexus Profile YAML file from disk and validates it.
 // Validation is a two-layer security gate:
-//   1. JSON Schema validation (structural + pattern constraints via embedded schema)
-//   2. Go-level semantic validation (family mapping, non-empty packages, no self-extends)
+//  1. JSON Schema validation (structural + pattern constraints via embedded schema)
+//  2. Go-level semantic validation (family mapping, non-empty packages, no self-extends)
 //
 // Both layers must pass for the profile to be accepted. A profile that fails
 // either layer is rejected — there is no "partial" acceptance.
@@ -123,12 +124,12 @@ const MaxExtendsDepth = 5
 // Callers should also call SanitizeProfileName on the filename before calling
 // Parse to prevent path traversal attacks.
 func Parse(path string) (*NexusProfile, error) {
-        data, err := os.ReadFile(path)
-        if err != nil {
-                return nil, fmt.Errorf("failed to read manifest '%s': %w", path, err)
-        }
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read manifest '%s': %w", path, err)
+	}
 
-        return ParseBytes(data)
+	return ParseBytes(data)
 }
 
 // ParseBytes parses and validates a Nexus Profile from raw YAML bytes.
@@ -144,22 +145,22 @@ func Parse(path string) (*NexusProfile, error) {
 // (prefixed "SCHEMA VALIDATION FAILED") and semantic failures (prefixed
 // "VALIDATION").
 func ParseBytes(data []byte) (*NexusProfile, error) {
-        // Layer 1: JSON Schema validation
-        if err := validateAgainstSchema(data); err != nil {
-                return nil, fmt.Errorf("SCHEMA VALIDATION FAILED: %w", err)
-        }
+	// Layer 1: JSON Schema validation
+	if err := validateAgainstSchema(data); err != nil {
+		return nil, fmt.Errorf("SCHEMA VALIDATION FAILED: %w", err)
+	}
 
-        // Layer 2: Go-level semantic validation
-        var profile NexusProfile
-        if err := yaml.Unmarshal(data, &profile); err != nil {
-                return nil, fmt.Errorf("failed to parse YAML manifest: %w", err)
-        }
+	// Layer 2: Go-level semantic validation
+	var profile NexusProfile
+	if err := yaml.Unmarshal(data, &profile); err != nil {
+		return nil, fmt.Errorf("failed to parse YAML manifest: %w", err)
+	}
 
-        if err := Validate(&profile); err != nil {
-                return nil, err
-        }
+	if err := Validate(&profile); err != nil {
+		return nil, err
+	}
 
-        return &profile, nil
+	return &profile, nil
 }
 
 // validateAgainstSchema converts YAML to JSON and validates against the
@@ -170,40 +171,40 @@ func ParseBytes(data []byte) (*NexusProfile, error) {
 // Per the Nexus Protocol: "The Engine operates on a Contract System."
 // The JSON Schema IS the contract. No profile may violate it.
 func validateAgainstSchema(yamlData []byte) error {
-        // Convert YAML to JSON for schema validation
-        var raw interface{}
-        if err := yaml.Unmarshal(yamlData, &raw); err != nil {
-                return fmt.Errorf("invalid YAML: %w", err)
-        }
+	// Convert YAML to JSON for schema validation
+	var raw interface{}
+	if err := yaml.Unmarshal(yamlData, &raw); err != nil {
+		return fmt.Errorf("invalid YAML: %w", err)
+	}
 
-        jsonData, err := json.Marshal(raw)
-        if err != nil {
-                return fmt.Errorf("failed to convert YAML to JSON: %w", err)
-        }
+	jsonData, err := json.Marshal(raw)
+	if err != nil {
+		return fmt.Errorf("failed to convert YAML to JSON: %w", err)
+	}
 
-        // Load the embedded schema
-        schemaBytes, err := schemaFS.ReadFile("schemas/nexus-profile.schema.json")
-        if err != nil {
-                return fmt.Errorf("failed to load embedded schema: %w", err)
-        }
+	// Load the embedded schema
+	schemaBytes, err := schemaFS.ReadFile("schemas/nexus-profile.schema.json")
+	if err != nil {
+		return fmt.Errorf("failed to load embedded schema: %w", err)
+	}
 
-        schemaLoader := gojsonschema.NewBytesLoader(schemaBytes)
-        documentLoader := gojsonschema.NewBytesLoader(jsonData)
+	schemaLoader := gojsonschema.NewBytesLoader(schemaBytes)
+	documentLoader := gojsonschema.NewBytesLoader(jsonData)
 
-        result, err := gojsonschema.Validate(schemaLoader, documentLoader)
-        if err != nil {
-                return fmt.Errorf("schema validation engine error: %w", err)
-        }
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		return fmt.Errorf("schema validation engine error: %w", err)
+	}
 
-        if !result.Valid() {
-                var errs []string
-                for _, desc := range result.Errors() {
-                        errs = append(errs, desc.String())
-                }
-                return fmt.Errorf("%s", strings.Join(errs, "; "))
-        }
+	if !result.Valid() {
+		var errs []string
+		for _, desc := range result.Errors() {
+			errs = append(errs, desc.String())
+		}
+		return fmt.Errorf("%s", strings.Join(errs, "; "))
+	}
 
-        return nil
+	return nil
 }
 
 // Validate ensures the profile conforms to the Nexus semantic contract.
@@ -217,62 +218,62 @@ func validateAgainstSchema(yamlData []byte) error {
 // Both Validate and the JSON Schema validation must pass for a profile to
 // be accepted by Parse or ParseBytes.
 func Validate(profile *NexusProfile) error {
-        if profile.Name == "" {
-                return fmt.Errorf("VALIDATION: profile 'name' is required")
-        }
+	if profile.Name == "" {
+		return fmt.Errorf("VALIDATION: profile 'name' is required")
+	}
 
-        if profile.Version == "" {
-                return fmt.Errorf("VALIDATION: profile 'version' is required")
-        }
+	if profile.Version == "" {
+		return fmt.Errorf("VALIDATION: profile 'version' is required")
+	}
 
-        if len(profile.Targets) == 0 && profile.Extends == "" {
-                return fmt.Errorf("VALIDATION: at least one 'target' is required (or specify 'extends')")
-        }
+	if len(profile.Targets) == 0 && profile.Extends == "" {
+		return fmt.Errorf("VALIDATION: at least one 'target' is required (or specify 'extends')")
+	}
 
-        for i, target := range profile.Targets {
-                if target.Family == "" {
-                        return fmt.Errorf("VALIDATION: targets[%d].family is required", i)
-                }
-                if !AllowedPackageFamilies[target.Family] {
-                        return fmt.Errorf("VALIDATION: targets[%d].family '%s' is not in the allowed list: %v",
-                                i, target.Family, allowedFamiliesList())
-                }
-                if len(target.Packages) == 0 {
-                        return fmt.Errorf("VALIDATION: targets[%d].packages must contain at least one package", i)
-                }
-                for j, pkg := range target.Packages {
-                        if pkg == "" {
-                                return fmt.Errorf("VALIDATION: targets[%d].packages[%d] cannot be empty", i, j)
-                        }
-                }
-        }
+	for i, target := range profile.Targets {
+		if target.Family == "" {
+			return fmt.Errorf("VALIDATION: targets[%d].family is required", i)
+		}
+		if !AllowedPackageFamilies[target.Family] {
+			return fmt.Errorf("VALIDATION: targets[%d].family '%s' is not in the allowed list: %v",
+				i, target.Family, allowedFamiliesList())
+		}
+		if len(target.Packages) == 0 {
+			return fmt.Errorf("VALIDATION: targets[%d].packages must contain at least one package", i)
+		}
+		for j, pkg := range target.Packages {
+			if pkg == "" {
+				return fmt.Errorf("VALIDATION: targets[%d].packages[%d] cannot be empty", i, j)
+			}
+		}
+	}
 
-        	// Validate extends field if present
-        	if profile.Extends != "" {
-        		if profile.Extends == profile.Name {
-        			return fmt.Errorf("VALIDATION: profile cannot extend itself")
-        		}
-        	}
+	// Validate extends field if present
+	if profile.Extends != "" {
+		if profile.Extends == profile.Name {
+			return fmt.Errorf("VALIDATION: profile cannot extend itself")
+		}
+	}
 
-        	// Validate dotfiles section if present.
-        	// The JSON Schema handles structural validation; this is the
-        	// semantic layer that catches what schema cannot express.
-        	if profile.Dotfiles != nil {
-        		for i, p := range profile.Dotfiles.ManagedPaths {
-        			if p == "" {
-        				return fmt.Errorf("VALIDATION: dotfiles.managed_paths[%d] cannot be empty", i)
-        			}
-        			if !strings.HasPrefix(p, "/") {
-        				return fmt.Errorf("VALIDATION: dotfiles.managed_paths[%d] must be an absolute path (got %q)", i, p)
-        			}
-        		}
-        		if profile.Dotfiles.Source != "" && !strings.HasPrefix(profile.Dotfiles.Source, "https://") {
-        			return fmt.Errorf("VALIDATION: dotfiles.source must be an HTTPS URL (got %q)", profile.Dotfiles.Source)
-        		}
-        	}
+	// Validate dotfiles section if present.
+	// The JSON Schema handles structural validation; this is the
+	// semantic layer that catches what schema cannot express.
+	if profile.Dotfiles != nil {
+		for i, p := range profile.Dotfiles.ManagedPaths {
+			if p == "" {
+				return fmt.Errorf("VALIDATION: dotfiles.managed_paths[%d] cannot be empty", i)
+			}
+			if !strings.HasPrefix(p, "/") {
+				return fmt.Errorf("VALIDATION: dotfiles.managed_paths[%d] must be an absolute path (got %q)", i, p)
+			}
+		}
+		if profile.Dotfiles.Source != "" && !strings.HasPrefix(profile.Dotfiles.Source, "https://") {
+			return fmt.Errorf("VALIDATION: dotfiles.source must be an HTTPS URL (got %q)", profile.Dotfiles.Source)
+		}
+	}
 
-        	return nil
-        }
+	return nil
+}
 
 // ResolveExtends recursively resolves the extends chain and merges profiles.
 // The child profile overlays the parent: packages are additive (merged within
@@ -289,34 +290,34 @@ func Validate(profile *NexusProfile) error {
 // through the ProfileLoader (which validates and integrity-checks each one)
 // before merging. A compromised parent cannot bypass validation.
 func ResolveExtends(profile *NexusProfile, loader ProfileLoader, visited map[string]bool, depth int) (*NexusProfile, error) {
-        if profile.Extends == "" {
-                return profile, nil
-        }
+	if profile.Extends == "" {
+		return profile, nil
+	}
 
-        if depth >= MaxExtendsDepth {
-                return nil, fmt.Errorf("extends chain exceeds maximum depth of %d — possible degenerate chain", MaxExtendsDepth)
-        }
+	if depth >= MaxExtendsDepth {
+		return nil, fmt.Errorf("extends chain exceeds maximum depth of %d — possible degenerate chain", MaxExtendsDepth)
+	}
 
-        // Cycle detection
-        if visited[profile.Name] {
-                return nil, fmt.Errorf("circular extends detected: profile '%s' appears twice in chain", profile.Name)
-        }
-        visited[profile.Name] = true
+	// Cycle detection
+	if visited[profile.Name] {
+		return nil, fmt.Errorf("circular extends detected: profile '%s' appears twice in chain", profile.Name)
+	}
+	visited[profile.Name] = true
 
-        // Load the parent profile
-        parent, err := loader.LoadProfile(profile.Extends)
-        if err != nil {
-                return nil, fmt.Errorf("failed to load parent profile '%s': %w", profile.Extends, err)
-        }
+	// Load the parent profile
+	parent, err := loader.LoadProfile(profile.Extends)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load parent profile '%s': %w", profile.Extends, err)
+	}
 
-        // Recursively resolve the parent's extends first
-        resolvedParent, err := ResolveExtends(parent, loader, visited, depth+1)
-        if err != nil {
-                return nil, err
-        }
+	// Recursively resolve the parent's extends first
+	resolvedParent, err := ResolveExtends(parent, loader, visited, depth+1)
+	if err != nil {
+		return nil, err
+	}
 
-        // Merge: parent as base, child overlays
-        return mergeProfiles(resolvedParent, profile), nil
+	// Merge: parent as base, child overlays
+	return mergeProfiles(resolvedParent, profile), nil
 }
 
 // mergeProfiles combines a parent and child profile. The child overlays:
@@ -324,66 +325,66 @@ func ResolveExtends(profile *NexusProfile, loader ProfileLoader, visited map[str
 // - Env: child wins for same key, parent keys preserved otherwise
 // - Metadata (name, version, description, author): child wins
 func mergeProfiles(parent, child *NexusProfile) *NexusProfile {
-        merged := &NexusProfile{
-                Name:        child.Name,
-                Version:     child.Version,
-                Description: child.Description,
-                Author:      child.Author,
-                Extends:     "", // Resolved — no longer needed
-                Targets:     []TargetConfig{},
-                Env:         make(map[string]string),
-        }
+	merged := &NexusProfile{
+		Name:        child.Name,
+		Version:     child.Version,
+		Description: child.Description,
+		Author:      child.Author,
+		Extends:     "", // Resolved — no longer needed
+		Targets:     []TargetConfig{},
+		Env:         make(map[string]string),
+	}
 
-        // Copy parent env
-        for k, v := range parent.Env {
-                merged.Env[k] = v
-        }
-        // Child env overrides
-        for k, v := range child.Env {
-                merged.Env[k] = v
-        }
+	// Copy parent env
+	for k, v := range parent.Env {
+		merged.Env[k] = v
+	}
+	// Child env overrides
+	for k, v := range child.Env {
+		merged.Env[k] = v
+	}
 
-        // Build package map: family -> deduplicated package set
-        pkgMap := make(map[string]map[string]bool)
+	// Build package map: family -> deduplicated package set
+	pkgMap := make(map[string]map[string]bool)
 
-        // Add parent packages
-        for _, target := range parent.Targets {
-                if pkgMap[target.Family] == nil {
-                        pkgMap[target.Family] = make(map[string]bool)
-                }
-                for _, pkg := range target.Packages {
-                        pkgMap[target.Family][pkg] = true
-                }
-        }
+	// Add parent packages
+	for _, target := range parent.Targets {
+		if pkgMap[target.Family] == nil {
+			pkgMap[target.Family] = make(map[string]bool)
+		}
+		for _, pkg := range target.Packages {
+			pkgMap[target.Family][pkg] = true
+		}
+	}
 
-        // Add child packages (dedup handled by map)
-        for _, target := range child.Targets {
-                if pkgMap[target.Family] == nil {
-                        pkgMap[target.Family] = make(map[string]bool)
-                }
-                for _, pkg := range target.Packages {
-                        pkgMap[target.Family][pkg] = true
-                }
-        }
+	// Add child packages (dedup handled by map)
+	for _, target := range child.Targets {
+		if pkgMap[target.Family] == nil {
+			pkgMap[target.Family] = make(map[string]bool)
+		}
+		for _, pkg := range target.Packages {
+			pkgMap[target.Family][pkg] = true
+		}
+	}
 
-        // Convert map back to TargetConfig slice
-        for family, pkgs := range pkgMap {
-                var pkgList []string
-                for pkg := range pkgs {
-                        pkgList = append(pkgList, pkg)
-                }
-                merged.Targets = append(merged.Targets, TargetConfig{
-                        Family:   family,
-                        Packages: pkgList,
-                })
-        }
+	// Convert map back to TargetConfig slice
+	for family, pkgs := range pkgMap {
+		var pkgList []string
+		for pkg := range pkgs {
+			pkgList = append(pkgList, pkg)
+		}
+		merged.Targets = append(merged.Targets, TargetConfig{
+			Family:   family,
+			Packages: pkgList,
+		})
+	}
 
-        // If child has no targets and no extends, inherit parent targets
-        if len(child.Targets) == 0 && child.Extends == "" && len(merged.Targets) == 0 {
-                merged.Targets = parent.Targets
-        }
+	// If child has no targets and no extends, inherit parent targets
+	if len(child.Targets) == 0 && child.Extends == "" && len(merged.Targets) == 0 {
+		merged.Targets = parent.Targets
+	}
 
-        return merged
+	return merged
 }
 
 // ProfileLoader is the interface for loading profiles by name. It enables
@@ -391,26 +392,27 @@ func mergeProfiles(parent, child *NexusProfile) *NexusProfile {
 // embedded defaults, remote fetch) without coupling to a specific backend.
 // The ProfileStore type implements this interface.
 type ProfileLoader interface {
-        LoadProfile(name string) (*NexusProfile, error)
+	LoadProfile(name string) (*NexusProfile, error)
 }
 
 // FormatProfileYAML serializes a NexusProfile back to a YAML string with
 // 2-space indentation. Used by `nexus profile create` to write new profiles
 // to disk. The output is human-readable and suitable for manual editing.
 func FormatProfileYAML(profile *NexusProfile) (string, error) {
-        var buf bytes.Buffer
-        encoder := yaml.NewEncoder(&buf)
-        encoder.SetIndent(2)
-        if err := encoder.Encode(profile); err != nil {
-                return "", err
-        }
-        return buf.String(), nil
+	var buf bytes.Buffer
+	encoder := yaml.NewEncoder(&buf)
+	encoder.SetIndent(2)
+	if err := encoder.Encode(profile); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 func allowedFamiliesList() []string {
-        families := make([]string, 0, len(AllowedPackageFamilies))
-        for f := range AllowedPackageFamilies {
-                families = append(families, f)
-        }
-        return families
+	families := make([]string, 0, len(AllowedPackageFamilies))
+	for f := range AllowedPackageFamilies {
+		families = append(families, f)
+	}
+	sort.Strings(families)
+	return families
 }

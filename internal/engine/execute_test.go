@@ -237,7 +237,7 @@ func TestSanitizeAndExecute_AllowedCommands(t *testing.T) {
 		{"ls_no_args", "ls", nil, false, false},
 		{"ls_with_path", "ls", []string{"/tmp"}, false, false},
 		{"which_git", "which", []string{"git"}, false, false},
-		{"cat_dev_null", "cat", []string{"/dev/null"}, false, false},
+		{"cat_dev_null", "cat", []string{"/dev/null"}, true, false},
 
 		// Commands in whitelist that may not be installed
 		{"apt-get_update", "apt-get", []string{"update"}, false, true},
@@ -336,14 +336,14 @@ func TestAllowedCommands_WhitelistIntegrity(t *testing.T) {
 	// Commands that MUST be in the whitelist for the engine to function
 	required := []string{
 		"uname", "hostname", "free", "lspci", "uptime",
-		"sudo", "apt-get", "apt-cache", "dpkg",
+		"apt-get", "apt-cache", "dpkg",
 		"pacman", "dnf", "rpm", "yum", "apk",
 		"chezmoi", "git", "wsl", "docker", "podman", "distrobox",
-		"which", "cat", "ls", "systemctl",
-		"node", "npm", "python3", "python", "java",
-		"vim", "curl", "wget", "zsh", "htop", "tmux",
+		"which", "ls", "systemctl", "cpupower",
 		// V4: Windows commands
 		"powershell", "dism", "where", "cmd", "systeminfo",
+		// V11: mode switcher
+		"sc", "powercfg",
 	}
 
 	for _, cmd := range required {
@@ -366,6 +366,9 @@ func TestAllowedCommands_DangerousCommandsExcluded(t *testing.T) {
 		"kill", "reboot", "shutdown", "fdisk", "format",
 		"mount", "umount", "su", "passwd", "useradd", "userdel",
 		"eval", "exec", "source",
+		// Commands removed from whitelist for security reasons
+		"sudo", "curl", "wget", "cat", "vim", "zsh",
+		"node", "npm", "python3", "python", "java", "htop", "tmux",
 	}
 
 	for _, cmd := range dangerous {
@@ -393,12 +396,9 @@ func TestValidatePrerequisites(t *testing.T) {
 		t.Fatal("ValidatePrerequisites returned nil map")
 	}
 
-	// Should check at least git and curl
+	// Should check at least git
 	if _, ok := results["git"]; !ok {
 		t.Error("ValidatePrerequisites should check for git")
-	}
-	if _, ok := results["curl"]; !ok {
-		t.Error("ValidatePrerequisites should check for curl")
 	}
 }
 

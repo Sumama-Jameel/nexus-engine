@@ -71,7 +71,7 @@ var secretPatterns = []struct {
 		Regex: regexp.MustCompile(`xox[abposr]-[0-9a-zA-Z\-]{10,}`),
 	},
 	{
-		Name:  "Generic API key assignment",
+		Name: "Generic API key assignment",
 		// Matches lines like:  api_key = "abcdefghijklmnop1234"
 		//                     APItoken: 'xyz123abc456def789ghi'
 		// 16+ char alphanumeric value, quoted.

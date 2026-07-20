@@ -31,18 +31,18 @@ import (
 )
 
 var (
-	outputJSON             bool
-	initConfigPath         string
-	profilePath            string
-	dryRun                 bool
-	forceRemove            bool
-	wslDistroName          string
-	wslSkipVerify          bool
-	wslSkipDownload        bool
-	vaultForce             bool
-	yesMode                bool
-	allowUnlistedServices  bool
-	nexusVersion          = "0.16.0"
+	outputJSON            bool
+	initConfigPath        string
+	profilePath           string
+	dryRun                bool
+	forceRemove           bool
+	wslDistroName         string
+	wslSkipVerify         bool
+	wslSkipDownload       bool
+	vaultForce            bool
+	yesMode               bool
+	allowUnlistedServices bool
+	nexusVersion          = "0.17.0-dev"
 )
 
 func main() {
@@ -339,221 +339,221 @@ Defaults to the distribution named "Nexus" if no name is specified.`,
 	wslCmd.AddCommand(wslStatusCmd, wslCheckCmd,
 		wslImportCmd, wslSetupCmd, wslRemoveCmd, wslListCmd, wslEnterCmd, wslImagesCmd)
 
-		// ─── V7 Commands: Dotfiles Management ───
-		dotfilesCmd := &cobra.Command{
-			Use:   "dotfiles",
-			Short: "Manage dotfiles via Chezmoi — install, sync, vault",
-			Long:  `Per V7 "The Chezmoi Integration (The Memory)".`,
-		}
+	// ─── V7 Commands: Dotfiles Management ───
+	dotfilesCmd := &cobra.Command{
+		Use:   "dotfiles",
+		Short: "Manage dotfiles via Chezmoi — install, sync, vault",
+		Long:  `Per V7 "The Chezmoi Integration (The Memory)".`,
+	}
 
-		dotfilesDetectCmd := &cobra.Command{
-			Use:   "detect",
-			Short: "Detect Chezmoi installation",
-			RunE:  runDotfilesDetect,
-		}
+	dotfilesDetectCmd := &cobra.Command{
+		Use:   "detect",
+		Short: "Detect Chezmoi installation",
+		RunE:  runDotfilesDetect,
+	}
 
-		dotfilesInstallCmd := &cobra.Command{
-			Use:   "install",
-			Short: "Install Chezmoi",
-			RunE:  runDotfilesInstall,
-		}
+	dotfilesInstallCmd := &cobra.Command{
+		Use:   "install",
+		Short: "Install Chezmoi",
+		RunE:  runDotfilesInstall,
+	}
 
-		dotfilesInitCmd := &cobra.Command{
-			Use:   "init <repo>",
-			Short: "Initialize chezmoi with a Git repo",
-			Args:  cobra.ExactArgs(1),
-			RunE:  runDotfilesInit,
-		}
+	dotfilesInitCmd := &cobra.Command{
+		Use:   "init <repo>",
+		Short: "Initialize chezmoi with a Git repo",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runDotfilesInit,
+	}
 
-		dotfilesRemoveCmd := &cobra.Command{
-			Use:   "remove",
-			Short: "Remove the Chezmoi installation",
-			RunE:  runDotfilesRemove,
-		}
+	dotfilesRemoveCmd := &cobra.Command{
+		Use:   "remove",
+		Short: "Remove the Chezmoi installation",
+		RunE:  runDotfilesRemove,
+	}
 
-		dotfilesApplyCmd := &cobra.Command{
-			Use:   "apply",
-			Short: "Apply dotfiles to live system",
-			RunE:  runDotfilesApply,
-		}
+	dotfilesApplyCmd := &cobra.Command{
+		Use:   "apply",
+		Short: "Apply dotfiles to live system",
+		RunE:  runDotfilesApply,
+	}
 
-		dotfilesStatusCmd := &cobra.Command{
-			Use:   "status",
-			Short: "Show chezmoi status",
-			RunE:  runDotfilesStatus,
-		}
+	dotfilesStatusCmd := &cobra.Command{
+		Use:   "status",
+		Short: "Show chezmoi status",
+		RunE:  runDotfilesStatus,
+	}
 
-		dotfilesDiffCmd := &cobra.Command{
-			Use:   "diff",
-			Short: "Show pending dotfile changes",
-			RunE:  runDotfilesDiff,
-		}
+	dotfilesDiffCmd := &cobra.Command{
+		Use:   "diff",
+		Short: "Show pending dotfile changes",
+		RunE:  runDotfilesDiff,
+	}
 
-		dotfilesAddCmd := &cobra.Command{
-			Use:   "add <path>",
-			Short: "Add a file to managed dotfiles",
-			Args:  cobra.ExactArgs(1),
-			RunE: func(cmd *cobra.Command, args []string) error {
-				force, _ := cmd.Flags().GetBool("force")
-				return runDotfilesAdd(cmd, args, force)
-			},
-		}
-		dotfilesAddCmd.Flags().Bool("force", false, "Allow tracking sensitive paths (--force)")
+	dotfilesAddCmd := &cobra.Command{
+		Use:   "add <path>",
+		Short: "Add a file to managed dotfiles",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			force, _ := cmd.Flags().GetBool("force")
+			return runDotfilesAdd(cmd, args, force)
+		},
+	}
+	dotfilesAddCmd.Flags().Bool("force", false, "Allow tracking sensitive paths (--force)")
 
-		dotfilesVerifyCmd := &cobra.Command{
-			Use:   "verify",
-			Short: "Verify managed dotfiles match source",
-			RunE:  runDotfilesVerify,
-		}
+	dotfilesVerifyCmd := &cobra.Command{
+		Use:   "verify",
+		Short: "Verify managed dotfiles match source",
+		RunE:  runDotfilesVerify,
+	}
 
-		dotfilesPushCmd := &cobra.Command{
-			Use:   "push",
-			Short: "Push local changes to remote",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				message, _ := cmd.Flags().GetString("message")
-				force, _ := cmd.Flags().GetBool("force")
-				token, _ := cmd.Flags().GetString("token")
-				return runDotfilesPush(cmd, message, force, token)
-			},
-		}
-		dotfilesPushCmd.Flags().String("message", "Update from Nexus", "Commit message")
-		dotfilesPushCmd.Flags().Bool("force", false, "Skip secret scan")
-		dotfilesPushCmd.Flags().String("token", "", "GitHub PAT (overrides NEXUS_DOTFILES_TOKEN env)")
+	dotfilesPushCmd := &cobra.Command{
+		Use:   "push",
+		Short: "Push local changes to remote",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			message, _ := cmd.Flags().GetString("message")
+			force, _ := cmd.Flags().GetBool("force")
+			token, _ := cmd.Flags().GetString("token")
+			return runDotfilesPush(cmd, message, force, token)
+		},
+	}
+	dotfilesPushCmd.Flags().String("message", "Update from Nexus", "Commit message")
+	dotfilesPushCmd.Flags().Bool("force", false, "Skip secret scan")
+	dotfilesPushCmd.Flags().String("token", "", "GitHub PAT (overrides NEXUS_DOTFILES_TOKEN env)")
 
-		dotfilesPullCmd := &cobra.Command{
-			Use:   "pull",
-			Short: "Pull from remote",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				rebase, _ := cmd.Flags().GetBool("rebase")
-				token, _ := cmd.Flags().GetString("token")
-				return runDotfilesPull(cmd, rebase, token)
-			},
-		}
-		dotfilesPullCmd.Flags().Bool("rebase", false, "Use rebase instead of --ff-only")
-		dotfilesPullCmd.Flags().String("token", "", "GitHub PAT (overrides NEXUS_DOTFILES_TOKEN env)")
+	dotfilesPullCmd := &cobra.Command{
+		Use:   "pull",
+		Short: "Pull from remote",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rebase, _ := cmd.Flags().GetBool("rebase")
+			token, _ := cmd.Flags().GetString("token")
+			return runDotfilesPull(cmd, rebase, token)
+		},
+	}
+	dotfilesPullCmd.Flags().Bool("rebase", false, "Use rebase instead of --ff-only")
+	dotfilesPullCmd.Flags().String("token", "", "GitHub PAT (overrides NEXUS_DOTFILES_TOKEN env)")
 
-		dotfilesSyncCmd := &cobra.Command{
-			Use:   "sync",
-			Short: "Pull + apply + push",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				message, _ := cmd.Flags().GetString("message")
-				force, _ := cmd.Flags().GetBool("force")
-				token, _ := cmd.Flags().GetString("token")
-				return runDotfilesSync(cmd, message, force, token)
-			},
-		}
-		dotfilesSyncCmd.Flags().String("message", "Update from Nexus", "Commit message")
-		dotfilesSyncCmd.Flags().Bool("force", false, "Skip secret scan")
-		dotfilesSyncCmd.Flags().String("token", "", "GitHub PAT (overrides NEXUS_DOTFILES_TOKEN env)")
+	dotfilesSyncCmd := &cobra.Command{
+		Use:   "sync",
+		Short: "Pull + apply + push",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			message, _ := cmd.Flags().GetString("message")
+			force, _ := cmd.Flags().GetBool("force")
+			token, _ := cmd.Flags().GetString("token")
+			return runDotfilesSync(cmd, message, force, token)
+		},
+	}
+	dotfilesSyncCmd.Flags().String("message", "Update from Nexus", "Commit message")
+	dotfilesSyncCmd.Flags().Bool("force", false, "Skip secret scan")
+	dotfilesSyncCmd.Flags().String("token", "", "GitHub PAT (overrides NEXUS_DOTFILES_TOKEN env)")
 
-		dotfilesCmd.AddCommand(dotfilesDetectCmd, dotfilesInstallCmd, dotfilesInitCmd, dotfilesRemoveCmd,
-			dotfilesApplyCmd, dotfilesStatusCmd, dotfilesDiffCmd,
-			dotfilesAddCmd, dotfilesVerifyCmd,
-			dotfilesPushCmd, dotfilesPullCmd, dotfilesSyncCmd)
+	dotfilesCmd.AddCommand(dotfilesDetectCmd, dotfilesInstallCmd, dotfilesInitCmd, dotfilesRemoveCmd,
+		dotfilesApplyCmd, dotfilesStatusCmd, dotfilesDiffCmd,
+		dotfilesAddCmd, dotfilesVerifyCmd,
+		dotfilesPushCmd, dotfilesPullCmd, dotfilesSyncCmd)
 
-		// ─── V9 Commands: Secrets Vault ───
-		vaultCmd := &cobra.Command{
-			Use:   "vault",
-			Short: "Age-encrypted secrets vault — add, list, remove",
-			Long:  `Per V9 "The Secrets Vault (The Shield)".`,
-		}
+	// ─── V9 Commands: Secrets Vault ───
+	vaultCmd := &cobra.Command{
+		Use:   "vault",
+		Short: "Age-encrypted secrets vault — add, list, remove",
+		Long:  `Per V9 "The Secrets Vault (The Shield)".`,
+	}
 
-		vaultInitCmd := &cobra.Command{
-			Use:   "init",
-			Short: "Initialize age key pair",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				force, _ := cmd.Flags().GetBool("force")
-				return runDotfilesVaultInit(cmd, force)
-			},
-		}
-		vaultInitCmd.Flags().Bool("force", false, "Re-initialize even if vault already exists")
+	vaultInitCmd := &cobra.Command{
+		Use:   "init",
+		Short: "Initialize age key pair",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			force, _ := cmd.Flags().GetBool("force")
+			return runDotfilesVaultInit(cmd, force)
+		},
+	}
+	vaultInitCmd.Flags().Bool("force", false, "Re-initialize even if vault already exists")
 
-		vaultAddCmd := &cobra.Command{
-			Use:   "add <file>",
-			Short: "Encrypt a file with age",
-			Args:  cobra.ExactArgs(1),
-			RunE: func(cmd *cobra.Command, args []string) error {
-				force, _ := cmd.Flags().GetBool("force")
-				return runDotfilesVaultAdd(cmd, args[0], force)
-			},
-		}
-		vaultAddCmd.Flags().Bool("force", false, "Force re-encryption of an already-encrypted file")
+	vaultAddCmd := &cobra.Command{
+		Use:   "add <file>",
+		Short: "Encrypt a file with age",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			force, _ := cmd.Flags().GetBool("force")
+			return runDotfilesVaultAdd(cmd, args[0], force)
+		},
+	}
+	vaultAddCmd.Flags().Bool("force", false, "Force re-encryption of an already-encrypted file")
 
-		vaultListCmd := &cobra.Command{
-			Use:   "list",
-			Short: "List vault-encrypted files",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				return runDotfilesVaultList(cmd)
-			},
-		}
+	vaultListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List vault-encrypted files",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runDotfilesVaultList(cmd)
+		},
+	}
 
-		vaultStatusCmd := &cobra.Command{
-			Use:   "status",
-			Short: "Show vault status",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				return runDotfilesVaultStatus(cmd)
-			},
-		}
+	vaultStatusCmd := &cobra.Command{
+		Use:   "status",
+		Short: "Show vault status",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runDotfilesVaultStatus(cmd)
+		},
+	}
 
-		vaultUnlockCmd := &cobra.Command{
-			Use:   "unlock",
-			Short: "Unlock vault with a private key",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				return runDotfilesVaultUnlock(cmd, args)
-			},
-		}
+	vaultUnlockCmd := &cobra.Command{
+		Use:   "unlock",
+		Short: "Unlock vault with a private key",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runDotfilesVaultUnlock(cmd, args)
+		},
+	}
 
-		vaultRemoveCmd := &cobra.Command{
-			Use:   "remove <file>",
-			Short: "Remove a vault entry",
-			Args:  cobra.ExactArgs(1),
-			RunE: func(cmd *cobra.Command, args []string) error {
-				return runDotfilesVaultRemove(cmd, args[0], vaultForce)
-			},
-		}
-		vaultRemoveCmd.Flags().BoolVar(&vaultForce, "force", false, "Skip confirmation")
+	vaultRemoveCmd := &cobra.Command{
+		Use:   "remove <file>",
+		Short: "Remove a vault entry",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runDotfilesVaultRemove(cmd, args[0], vaultForce)
+		},
+	}
+	vaultRemoveCmd.Flags().BoolVar(&vaultForce, "force", false, "Skip confirmation")
 
-		vaultCmd.AddCommand(vaultInitCmd, vaultAddCmd, vaultListCmd, vaultStatusCmd,
-			vaultUnlockCmd, vaultRemoveCmd)
+	vaultCmd.AddCommand(vaultInitCmd, vaultAddCmd, vaultListCmd, vaultStatusCmd,
+		vaultUnlockCmd, vaultRemoveCmd)
 
-		dotfilesCmd.AddCommand(dotfilesDetectCmd, dotfilesInstallCmd, dotfilesInitCmd, dotfilesRemoveCmd,
-			dotfilesApplyCmd, dotfilesStatusCmd, dotfilesDiffCmd,
-			dotfilesAddCmd, dotfilesVerifyCmd,
-			dotfilesPushCmd, dotfilesPullCmd, dotfilesSyncCmd,
-			vaultCmd)
+	dotfilesCmd.AddCommand(dotfilesDetectCmd, dotfilesInstallCmd, dotfilesInitCmd, dotfilesRemoveCmd,
+		dotfilesApplyCmd, dotfilesStatusCmd, dotfilesDiffCmd,
+		dotfilesAddCmd, dotfilesVerifyCmd,
+		dotfilesPushCmd, dotfilesPullCmd, dotfilesSyncCmd,
+		vaultCmd)
 
-		// ─── V11 Commands: Mode Switcher ───
-		modeCmd := &cobra.Command{
-			Use:   "mode",
-			Short: "Atomic mode switching — dev, gamer, work, or custom",
-			Long: `Modes are declarative, switchable units that bundle a profile +
+	// ─── V11 Commands: Mode Switcher ───
+	modeCmd := &cobra.Command{
+		Use:   "mode",
+		Short: "Atomic mode switching — dev, gamer, work, or custom",
+		Long: `Modes are declarative, switchable units that bundle a profile +
 	dotfiles + service toggles + OS tweaks into one atomic apply call.
 	See ADR 010 for the full architecture.`,
-		}
+	}
 
-		modeListCmd := &cobra.Command{
-			Use:   "list",
-			Short: "List all available modes (built-ins + user-defined)",
-			RunE:  runModeList,
-		}
+	modeListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all available modes (built-ins + user-defined)",
+		RunE:  runModeList,
+	}
 
-		modeCurrentCmd := &cobra.Command{
-			Use:   "current",
-			Short: "Show the currently active mode",
-			RunE:  runModeCurrent,
-		}
+	modeCurrentCmd := &cobra.Command{
+		Use:   "current",
+		Short: "Show the currently active mode",
+		RunE:  runModeCurrent,
+	}
 
-		modeShowCmd := &cobra.Command{
-			Use:   "show <name>",
-			Short: "Show a mode's definition (profile, services, tweaks)",
-			Args:  cobra.ExactArgs(1),
-			RunE:  runModeShow,
-		}
+	modeShowCmd := &cobra.Command{
+		Use:   "show <name>",
+		Short: "Show a mode's definition (profile, services, tweaks)",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runModeShow,
+	}
 
-		modeApplyCmd := &cobra.Command{
-			Use:   "apply <name>",
-			Short: "Apply a mode — switch profile, services, and OS tweaks atomically",
-			Long: `Applies a named mode through the V11 atomic switch pipeline:
+	modeApplyCmd := &cobra.Command{
+		Use:   "apply <name>",
+		Short: "Apply a mode — switch profile, services, and OS tweaks atomically",
+		Long: `Applies a named mode through the V11 atomic switch pipeline:
 	  1. Resolve the mode (built-in or user-defined)
 	  2. Validate services against the allowlist
 	  3. Apply the referenced profile
@@ -564,299 +564,297 @@ Defaults to the distribution named "Nexus" if no name is specified.`,
 
 	  Dry-run prints the plan without executing.
 	  --allow-unlisted-services lifts the service allowlist (audit-logged).`,
-			Args: cobra.ExactArgs(1),
-			RunE: runModeApply,
-		}
-		modeApplyCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show the switch plan without executing")
-		modeApplyCmd.Flags().BoolVar(&yesMode, "yes", false, "Skip confirmation prompt")
-		modeApplyCmd.Flags().BoolVar(&allowUnlistedServices, "allow-unlisted-services", false, "Allow service names not in the allowlist (audit-logged)")
+		Args: cobra.ExactArgs(1),
+		RunE: runModeApply,
+	}
+	modeApplyCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show the switch plan without executing")
+	modeApplyCmd.Flags().BoolVar(&yesMode, "yes", false, "Skip confirmation prompt")
+	modeApplyCmd.Flags().BoolVar(&allowUnlistedServices, "allow-unlisted-services", false, "Allow service names not in the allowlist (audit-logged)")
 
-		modeRollbackCmd := &cobra.Command{
-			Use:   "rollback",
-			Short: "Re-apply the previously active mode",
-			Long: `Re-applies the mode that was active before the current one.
+	modeRollbackCmd := &cobra.Command{
+		Use:   "rollback",
+		Short: "Re-apply the previously active mode",
+		Long: `Re-applies the mode that was active before the current one.
 	Equivalent to 'nexus mode apply <previous>' — useful when an apply
 	fails partway and the system is in an inconsistent state.
 	No-op when no previous mode is recorded.`,
-			RunE: runModeRollback,
-		}
+		RunE: runModeRollback,
+	}
 
-		modeDefineCmd := &cobra.Command{
-			Use:   "define <name>",
-			Short: "Define a new user mode interactively",
-			Long: `Interactive wizard that walks through all mode fields and
+	modeDefineCmd := &cobra.Command{
+		Use:   "define <name>",
+		Short: "Define a new user mode interactively",
+		Long: `Interactive wizard that walks through all mode fields and
 	writes the YAML to ~/.nexus/modes/<name>.yaml.`,
-			Args: cobra.ExactArgs(1),
-			RunE: runModeDefine,
-		}
+		Args: cobra.ExactArgs(1),
+		RunE: runModeDefine,
+	}
 
-		modeCmd.AddCommand(modeListCmd, modeCurrentCmd, modeShowCmd,
-			modeApplyCmd, modeRollbackCmd, modeDefineCmd)
+	modeCmd.AddCommand(modeListCmd, modeCurrentCmd, modeShowCmd,
+		modeApplyCmd, modeRollbackCmd, modeDefineCmd)
 
-		// ─── V12 Commands: Container Management ───
-		containerCmd := &cobra.Command{
-			Use:   "container",
-			Short: "Distrobox — run any Linux app from any distro",
-			Long: `Manage Distrobox containers. Create, enter, list, and remove
+	// ─── V12 Commands: Container Management ───
+	containerCmd := &cobra.Command{
+		Use:   "container",
+		Short: "Distrobox — run any Linux app from any distro",
+		Long: `Manage Distrobox containers. Create, enter, list, and remove
 	containers running any Linux distribution.
 	See ADR 011 for the full architecture.`,
-		}
+	}
 
-		containerListCmd := &cobra.Command{
-			Use:   "list",
-			Short: "List all Distrobox containers",
-			RunE:  runContainerList,
-		}
+	containerListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all Distrobox containers",
+		RunE:  runContainerList,
+	}
 
-		containerInfoCmd := &cobra.Command{
-			Use:   "info <name>",
-			Short: "Show container details",
-			Args:  cobra.ExactArgs(1),
-			RunE:  runContainerInfo,
-		}
+	containerInfoCmd := &cobra.Command{
+		Use:   "info <name>",
+		Short: "Show container details",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runContainerInfo,
+	}
 
-		containerCreateCmd := &cobra.Command{
-			Use:   "create <name>",
-			Short: "Create a Distrobox container",
-			Args:  cobra.ExactArgs(1),
-			RunE:  runContainerCreate,
-		}
-		containerCreateCmd.Flags().String("image", "", "OCI image reference")
+	containerCreateCmd := &cobra.Command{
+		Use:   "create <name>",
+		Short: "Create a Distrobox container",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runContainerCreate,
+	}
+	containerCreateCmd.Flags().String("image", "", "OCI image reference")
 
-		containerEnterCmd := &cobra.Command{
-			Use:   "enter <name>",
-			Short: "Print the command to enter a container",
-			Args:  cobra.ExactArgs(1),
-			RunE:  runContainerEnter,
-		}
+	containerEnterCmd := &cobra.Command{
+		Use:   "enter <name>",
+		Short: "Print the command to enter a container",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runContainerEnter,
+	}
 
-		containerAppsCmd := &cobra.Command{
-			Use:   "apps <name>",
-			Short: "List apps in a container",
-			Args:  cobra.ExactArgs(1),
-			RunE:  runContainerApps,
-		}
+	containerAppsCmd := &cobra.Command{
+		Use:   "apps <name>",
+		Short: "List apps in a container",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runContainerApps,
+	}
 
-		containerRemoveCmd := &cobra.Command{
-			Use:   "remove <name>",
-			Short: "Remove a container",
-			Args:  cobra.ExactArgs(1),
-			RunE:  runContainerRemove,
-		}
-		containerRemoveCmd.Flags().Bool("force", false, "Skip managed-state check")
+	containerRemoveCmd := &cobra.Command{
+		Use:   "remove <name>",
+		Short: "Remove a container",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runContainerRemove,
+	}
+	containerRemoveCmd.Flags().Bool("force", false, "Skip managed-state check")
 
-		containerCmd.AddCommand(containerListCmd, containerInfoCmd,
-			containerCreateCmd, containerEnterCmd, containerAppsCmd, containerRemoveCmd)
+	containerCmd.AddCommand(containerListCmd, containerInfoCmd,
+		containerCreateCmd, containerEnterCmd, containerAppsCmd, containerRemoveCmd)
 
-		// ─── V13 Commands: Hardware Ledger ───
-		ledgerCmd := &cobra.Command{
-			Use:   "ledger",
-			Short: "Hardware compatibility ledger — record, query, and sync hardware reports",
-			Long: `The V13 Hardware Ledger (The Intelligence) records hardware configuration
+	// ─── V13 Commands: Hardware Ledger ───
+	ledgerCmd := &cobra.Command{
+		Use:   "ledger",
+		Short: "Hardware compatibility ledger — record, query, and sync hardware reports",
+		Long: `The V13 Hardware Ledger (The Intelligence) records hardware configuration
 	snapshots paired with install outcomes. Use it to understand what works
 	on your machine and to contribute to the community compatibility database.`,
-		}
+	}
 
-		ledgerRecordCmd := &cobra.Command{
-			Use:   "record",
-			Short: "Record a hardware report from the current system state",
-			Long:  `Probes the system and saves a hardware report to the local ledger.`,
-			RunE:  runLedgerRecord,
-		}
+	ledgerRecordCmd := &cobra.Command{
+		Use:   "record",
+		Short: "Record a hardware report from the current system state",
+		Long:  `Probes the system and saves a hardware report to the local ledger.`,
+		RunE:  runLedgerRecord,
+	}
 
-		ledgerStatusCmd := &cobra.Command{
-			Use:   "status",
-			Short: "Show ledger statistics and sync status",
-			Long:  `Displays the number of records, last record time, and sync status.`,
-			RunE:  runLedgerStatus,
-		}
+	ledgerStatusCmd := &cobra.Command{
+		Use:   "status",
+		Short: "Show ledger statistics and sync status",
+		Long:  `Displays the number of records, last record time, and sync status.`,
+		RunE:  runLedgerStatus,
+	}
 
-		ledgerQueryCmd := &cobra.Command{
-			Use:   "query <field> <value>",
-			Short: "Query the ledger for hardware compatibility data",
-			Long: `Search the ledger for records matching a specific field value.
+	ledgerQueryCmd := &cobra.Command{
+		Use:   "query <field> <value>",
+		Short: "Query the ledger for hardware compatibility data",
+		Long: `Search the ledger for records matching a specific field value.
 	Supported fields: gpu, kernel, os, arch, cpu.
 	Example: nexus ledger query gpu "NVIDIA"`,
-			Args: cobra.ExactArgs(2),
-			RunE: runLedgerQuery,
-		}
+		Args: cobra.ExactArgs(2),
+		RunE: runLedgerQuery,
+	}
 
-		ledgerCheckCmd := &cobra.Command{
-			Use:   "check",
-			Short: "Check if your hardware is known to work with Nexus",
-			Long:  `Probes the system and compares against the ledger to see if this hardware has been tested.`,
-			RunE:  runLedgerCheck,
-		}
+	ledgerCheckCmd := &cobra.Command{
+		Use:   "check",
+		Short: "Check if your hardware is known to work with Nexus",
+		Long:  `Probes the system and compares against the ledger to see if this hardware has been tested.`,
+		RunE:  runLedgerCheck,
+	}
 
-		ledgerSyncCmd := &cobra.Command{
-			Use:   "sync",
-			Short: "Push local ledger to the community registry",
-			Long: `Uploads anonymized hardware reports to the community ledger.
+	ledgerSyncCmd := &cobra.Command{
+		Use:   "sync",
+		Short: "Push local ledger to the community registry",
+		Long: `Uploads anonymized hardware reports to the community ledger.
 	Use --enable to opt into community sharing on first sync.
 	Data contains NO personal information — only hardware specs + success status.`,
-			RunE: runLedgerSync,
-		}
-		ledgerSyncCmd.Flags().Bool("enable", false, "Enable community sync and upload local records")
-		ledgerSyncCmd.Flags().Bool("disable", false, "Disable community sync")
+		RunE: runLedgerSync,
+	}
+	ledgerSyncCmd.Flags().Bool("enable", false, "Enable community sync and upload local records")
+	ledgerSyncCmd.Flags().Bool("disable", false, "Disable community sync")
 
-		ledgerPullCmd := &cobra.Command{
-			Use:   "pull",
-			Short: "Pull community compatibility data",
-			Long:  `Downloads the community compatibility registry for offline matching.`,
-			RunE:  runLedgerPull,
-		}
+	ledgerPullCmd := &cobra.Command{
+		Use:   "pull",
+		Short: "Pull community compatibility data",
+		Long:  `Downloads the community compatibility registry for offline matching.`,
+		RunE:  runLedgerPull,
+	}
 
-		ledgerCmd.AddCommand(ledgerRecordCmd, ledgerStatusCmd, ledgerQueryCmd,
-			ledgerCheckCmd, ledgerSyncCmd, ledgerPullCmd)
+	ledgerCmd.AddCommand(ledgerRecordCmd, ledgerStatusCmd, ledgerQueryCmd,
+		ledgerCheckCmd, ledgerSyncCmd, ledgerPullCmd)
 
-		// ─── V14 Commands: Teleport Migration ───
-		teleportCmd := &cobra.Command{
-			Use:   "teleport",
-			Short: "Migrate Windows user folders into WSL2 via symlinks",
-			Long: `The V14 Teleport Migration Tool (The Closer) walks your Windows
+	// ─── V14 Commands: Teleport Migration ───
+	teleportCmd := &cobra.Command{
+		Use:   "teleport",
+		Short: "Migrate Windows user folders into WSL2 via symlinks",
+		Long: `The V14 Teleport Migration Tool (The Closer) walks your Windows
 	user profile (Documents, Desktop, Downloads, Pictures) and creates
 	symlinks in your WSL2 home directory — zero data copy, zero risk.
 
 	Only available inside WSL2. On native Linux this command is a no-op.`,
-			RunE: runTeleport,
-		}
-		teleportCmd.Flags().Bool("dry-run", false, "Preview what would be linked without making changes")
+		RunE: runTeleport,
+	}
+	teleportCmd.Flags().Bool("dry-run", false, "Preview what would be linked without making changes")
 
-		// ─── V15 Commands: Global Registry ───
-		registryCmd := &cobra.Command{
-			Use:   "registry",
-			Short: "Browse, fetch, and submit community profiles",
-			Long: `The V15 Global Registry (The Launch) connects you to the
+	// ─── V15 Commands: Global Registry ───
+	registryCmd := &cobra.Command{
+		Use:   "registry",
+		Short: "Browse, fetch, and submit community profiles",
+		Long: `The V15 Global Registry (The Launch) connects you to the
 	community profile ecosystem. Browse available profiles, fetch them
 	into your local store, and submit your own for others to use.
 
 	The registry is hosted in the profiles/ directory of this repository.`,
-		}
-
-		registryListCmd := &cobra.Command{
-			Use:   "list",
-			Short: "List all available profiles in the community registry",
-			Long:  `Fetches the community registry index and displays all profiles.`,
-			RunE:  runRegistryList,
-		}
-
-		registrySearchCmd := &cobra.Command{
-			Use:   "search <query>",
-			Short: "Search the registry for profiles by keyword",
-			Long:  `Searches profile names, authors, descriptions, and target families.`,
-			Args:  cobra.ExactArgs(1),
-			RunE:  runRegistrySearch,
-		}
-
-		registryFetchCmd := &cobra.Command{
-			Use:   "fetch <name>",
-			Short: "Download a profile from the registry",
-			Long:  `Fetches a profile by name, verifies its SHA256, and saves it locally.`,
-			Args:  cobra.ExactArgs(1),
-			RunE:  runRegistryFetch,
-		}
-
-		registrySubmitCmd := &cobra.Command{
-			Use:   "submit <file>",
-			Short: "Validate and prepare a profile for community submission",
-			Long:  `Reads a local profile YAML, validates its structure, and prints instructions for submitting it to the community registry via GitHub pull request.`,
-			Args:  cobra.ExactArgs(1),
-			RunE:  runRegistrySubmit,
-		}
-
-		registryCmd.AddCommand(registryListCmd, registrySearchCmd,
-			registryFetchCmd, registrySubmitCmd)
-
-		rootCmd.AddCommand(probeCmd, initCmd, versionCmd, configCmd,
-			installCmd, removeCmd, listCmd, searchCmd, updateCmd, profileCmd,
-			wslCmd, dotfilesCmd, modeCmd, containerCmd, ledgerCmd, teleportCmd,
-			registryCmd)
-
-		if err := rootCmd.ExecuteContext(ctx); err != nil {
-			os.Exit(1)
-		}
 	}
 
-	// ─── Helpers ───
-
-
-	type nexusDeps struct {
-		pm     installer.PackageManager
-		state  *engine.StateTracker
-		audit  *engine.AuditLogger
-		env    *bridge.EnvironmentInfo
-		family string
-		execFn installer.ExecFunc
+	registryListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all available profiles in the community registry",
+		Long:  `Fetches the community registry index and displays all profiles.`,
+		RunE:  runRegistryList,
 	}
 
-	func initDeps(ctx context.Context) (*nexusDeps, error) {
-		env := bridge.DetectEnvironment(ctx)
-
-		pmToFamily := map[string]string{
-			"apt": "debian", "pacman": "arch", "dnf": "fedora", "yum": "fedora", "apk": "alpine",
-		}
-		family := pmToFamily[env.PackageManager]
-		if family == "" {
-			return nil, fmt.Errorf("unsupported package manager: %s", env.PackageManager)
-		}
-
-		pm, err := installer.NewInstaller(family, engine.SanitizeAndExecute)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create installer: %w", err)
-		}
-
-		state, err := engine.NewStateTracker()
-		if err != nil {
-			return nil, fmt.Errorf("failed to init state tracker: %w", err)
-		}
-
-		audit, err := engine.NewAuditLogger()
-		if err != nil {
-			return nil, fmt.Errorf("failed to init audit logger: %w", err)
-		}
-
-		return &nexusDeps{
-			pm: pm, state: state, audit: audit, env: env,
-			family: family, execFn: engine.SanitizeAndExecute,
-		}, nil
+	registrySearchCmd := &cobra.Command{
+		Use:   "search <query>",
+		Short: "Search the registry for profiles by keyword",
+		Long:  `Searches profile names, authors, descriptions, and target families.`,
+		Args:  cobra.ExactArgs(1),
+		RunE:  runRegistrySearch,
 	}
 
-	func initProfileStore() (*manifest.ProfileStore, error) {
-		store, err := manifest.NewProfileStore()
-		if err != nil {
-			return nil, err
-		}
-		// Initialize bundled defaults
-		if err := store.Initialize(manifest.BundledDefaults()); err != nil {
-			return nil, fmt.Errorf("failed to initialize profile store: %w", err)
-		}
-		return store, nil
+	registryFetchCmd := &cobra.Command{
+		Use:   "fetch <name>",
+		Short: "Download a profile from the registry",
+		Long:  `Fetches a profile by name, verifies its SHA256, and saves it locally.`,
+		Args:  cobra.ExactArgs(1),
+		RunE:  runRegistryFetch,
 	}
 
-	func initRunnerDeps(ctx context.Context) (*runner.Dependencies, error) {
-		deps, err := initDeps(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		store, storeErr := initProfileStore()
-		if storeErr != nil {
-			// Non-fatal: runner can work without profile store for basic operations
-			store = nil
-		}
-
-		return &runner.Dependencies{
-			PM:           deps.pm,
-			State:        deps.state,
-			Audit:        deps.audit,
-			Env:          deps.env,
-			Family:       deps.family,
-			ExecFn:       deps.execFn,
-			ProfileStore: store,
-			Output:       os.Stdout,
-			JSONOutput:   outputJSON,
-			DryRun:       dryRun,
-			ForceRemove:  forceRemove,
-		}, nil
+	registrySubmitCmd := &cobra.Command{
+		Use:   "submit <file>",
+		Short: "Validate and prepare a profile for community submission",
+		Long:  `Reads a local profile YAML, validates its structure, and prints instructions for submitting it to the community registry via GitHub pull request.`,
+		Args:  cobra.ExactArgs(1),
+		RunE:  runRegistrySubmit,
 	}
 
+	registryCmd.AddCommand(registryListCmd, registrySearchCmd,
+		registryFetchCmd, registrySubmitCmd)
+
+	rootCmd.AddCommand(probeCmd, initCmd, versionCmd, configCmd,
+		installCmd, removeCmd, listCmd, searchCmd, updateCmd, profileCmd,
+		wslCmd, dotfilesCmd, modeCmd, containerCmd, ledgerCmd, teleportCmd,
+		registryCmd)
+
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
+		os.Exit(1)
+	}
+}
+
+// ─── Helpers ───
+
+type nexusDeps struct {
+	pm     installer.PackageManager
+	state  *engine.StateTracker
+	audit  *engine.AuditLogger
+	env    *bridge.EnvironmentInfo
+	family string
+	execFn installer.ExecFunc
+}
+
+func initDeps(ctx context.Context) (*nexusDeps, error) {
+	env := bridge.DetectEnvironment(ctx)
+
+	pmToFamily := map[string]string{
+		"apt": "debian", "pacman": "arch", "dnf": "fedora", "yum": "fedora", "apk": "alpine",
+	}
+	family := pmToFamily[env.PackageManager]
+	if family == "" {
+		return nil, fmt.Errorf("unsupported package manager: %s", env.PackageManager)
+	}
+
+	pm, err := installer.NewInstaller(family, engine.SanitizeAndExecute)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create installer: %w", err)
+	}
+
+	state, err := engine.NewStateTracker()
+	if err != nil {
+		return nil, fmt.Errorf("failed to init state tracker: %w", err)
+	}
+
+	audit, err := engine.NewAuditLogger()
+	if err != nil {
+		return nil, fmt.Errorf("failed to init audit logger: %w", err)
+	}
+
+	return &nexusDeps{
+		pm: pm, state: state, audit: audit, env: env,
+		family: family, execFn: engine.SanitizeAndExecute,
+	}, nil
+}
+
+func initProfileStore() (*manifest.ProfileStore, error) {
+	store, err := manifest.NewProfileStore()
+	if err != nil {
+		return nil, err
+	}
+	// Initialize bundled defaults
+	if err := store.Initialize(manifest.BundledDefaults()); err != nil {
+		return nil, fmt.Errorf("failed to initialize profile store: %w", err)
+	}
+	return store, nil
+}
+
+func initRunnerDeps(ctx context.Context) (*runner.Dependencies, error) {
+	deps, err := initDeps(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	store, storeErr := initProfileStore()
+	if storeErr != nil {
+		// Non-fatal: runner can work without profile store for basic operations
+		store = nil
+	}
+
+	return &runner.Dependencies{
+		PM:           deps.pm,
+		State:        deps.state,
+		Audit:        deps.audit,
+		Env:          deps.env,
+		Family:       deps.family,
+		ExecFn:       deps.execFn,
+		ProfileStore: store,
+		Output:       os.Stdout,
+		JSONOutput:   outputJSON,
+		DryRun:       dryRun,
+		ForceRemove:  forceRemove,
+	}, nil
+}

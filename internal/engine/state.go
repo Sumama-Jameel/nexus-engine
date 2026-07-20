@@ -15,31 +15,31 @@
 package engine
 
 import (
-        "encoding/json"
-        "fmt"
-        "os"
-        "path/filepath"
-        "sync"
-        "time"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sync"
+	"time"
 )
 
 // PackageState records the installation state of a single package managed
 // by Nexus. It persists to ~/.nexus/state.json and enables idempotent
 // operations, drift detection, and targeted rollback.
 type PackageState struct {
-        // InstalledAt is the UTC timestamp when the package was successfully
-        // installed by the Nexus engine.
-        InstalledAt time.Time `json:"installed_at"`
-        // Profile is the name of the Nexus profile that triggered the installation,
-        // used to determine ownership during profile removal.
-        Profile string `json:"profile"`
-        // Verified indicates whether the package's installation was confirmed by
-        // a post-install verification check (e.g., checking the binary exists on PATH).
-        Verified bool `json:"verified"`
-        // PackageManager is the name of the package manager used to install this
-        // package (e.g., "apt-get", "dnf", "pacman"), recorded to ensure the
-        // correct manager is used for removal.
-        PackageManager string `json:"package_manager"`
+	// InstalledAt is the UTC timestamp when the package was successfully
+	// installed by the Nexus engine.
+	InstalledAt time.Time `json:"installed_at"`
+	// Profile is the name of the Nexus profile that triggered the installation,
+	// used to determine ownership during profile removal.
+	Profile string `json:"profile"`
+	// Verified indicates whether the package's installation was confirmed by
+	// a post-install verification check (e.g., checking the binary exists on PATH).
+	Verified bool `json:"verified"`
+	// PackageManager is the name of the package manager used to install this
+	// package (e.g., "apt-get", "dnf", "pacman"), recorded to ensure the
+	// correct manager is used for removal.
+	PackageManager string `json:"package_manager"`
 }
 
 // WSLInstanceState records the state of a Nexus-managed WSL2 instance.
@@ -151,10 +151,10 @@ type VaultState struct {
 // Per ADR 011: every container created via Nexus is tracked here
 // so that `nexus container remove` only removes our containers.
 type ContainerState struct {
-	Name      string    `json:"name"`
-	Image     string    `json:"image"`
-	Family    string    `json:"family"`
-	CreatedAt time.Time `json:"created_at"`
+	Name          string    `json:"name"`
+	Image         string    `json:"image"`
+	Family        string    `json:"family"`
+	CreatedAt     time.Time `json:"created_at"`
 	LastEnteredAt time.Time `json:"last_entered_at,omitempty"`
 }
 
@@ -267,255 +267,257 @@ type NexusState struct {
 // The state file tracks what Nexus installed so it can make intelligent
 // decisions: skip already-installed packages, detect drift, enable rollback.
 type StateTracker struct {
-        path  string
-        state *NexusState
-        mu    sync.Mutex
+	path  string
+	state *NexusState
+	mu    sync.Mutex
 }
 
 // NewStateTracker creates or loads the state file.
 func NewStateTracker() (*StateTracker, error) {
-        homeDir, err := os.UserHomeDir()
-        if err != nil {
-                return nil, fmt.Errorf("failed to determine home directory: %w", err)
-        }
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine home directory: %w", err)
+	}
 
-        nexusDir := filepath.Join(homeDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+	nexusDir := filepath.Join(homeDir, ".nexus")
+	if err := os.MkdirAll(nexusDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create nexus directory %s: %w", nexusDir, err)
+	}
 
-	path := filepath.Join(nexusDir, "state.json")
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		path = resolved
+	path, err := resolveInNexusDir(nexusDir, "state.json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve state file path: %w", err)
 	}
 	tracker := &StateTracker{path: path}
 
-        // Load existing state or create new
-        if data, err := os.ReadFile(path); err == nil {
-                var state NexusState
-                if err := json.Unmarshal(data, &state); err == nil {
-                        // Migration: ensure WSLInstances is initialized for existing state files
-                        if state.WSLInstances == nil {
-                                state.WSLInstances = make(map[string]WSLInstanceState)
-                        }
-                        tracker.state = &state
-                        return tracker, nil
-                }
-        }
-
-		// Fresh state
-		tracker.state = &NexusState{
-			Version:         1,
-			LastModified:    time.Now().UTC(),
-			Packages:        make(map[string]PackageState),
-			ProfilesApplied: []string{},
-			WSLInstances:    make(map[string]WSLInstanceState),
-			Mode:            ModeState{},
-			Containers:      make(map[string]ContainerState),
-			Dotfiles:        DotfilesState{},
-			Ledger:          HardwareLedger{},
+	// Load existing state or create new
+	if data, err := os.ReadFile(path); err == nil {
+		var state NexusState
+		if err := json.Unmarshal(data, &state); err == nil {
+			// Migration: ensure WSLInstances is initialized for existing state files
+			if state.WSLInstances == nil {
+				state.WSLInstances = make(map[string]WSLInstanceState)
+			}
+			tracker.state = &state
+			return tracker, nil
 		}
+	}
 
-                		return tracker, nil
+	// Fresh state
+	tracker.state = &NexusState{
+		Version:         1,
+		LastModified:    time.Now().UTC(),
+		Packages:        make(map[string]PackageState),
+		ProfilesApplied: []string{},
+		WSLInstances:    make(map[string]WSLInstanceState),
+		Mode:            ModeState{},
+		Containers:      make(map[string]ContainerState),
+		Dotfiles:        DotfilesState{},
+		Ledger:          HardwareLedger{},
+	}
+
+	return tracker, nil
 }
 
 // RecordInstall adds a successfully installed package to the state.
 func (s *StateTracker) RecordInstall(pkg string, profile string, pmName string, verified bool) error {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        s.state.Packages[pkg] = PackageState{
-                InstalledAt:    time.Now().UTC(),
-                Profile:        profile,
-                Verified:       verified,
-                PackageManager: pmName,
-        }
-        s.state.LastModified = time.Now().UTC()
+	s.state.Packages[pkg] = PackageState{
+		InstalledAt:    time.Now().UTC(),
+		Profile:        profile,
+		Verified:       verified,
+		PackageManager: pmName,
+	}
+	s.state.LastModified = time.Now().UTC()
 
-        // Track profile
-        found := false
-        for _, p := range s.state.ProfilesApplied {
-                if p == profile {
-                        found = true
-                        break
-                }
-        }
-        if !found {
-                s.state.ProfilesApplied = append(s.state.ProfilesApplied, profile)
-        }
+	// Track profile
+	found := false
+	for _, p := range s.state.ProfilesApplied {
+		if p == profile {
+			found = true
+			break
+		}
+	}
+	if !found {
+		s.state.ProfilesApplied = append(s.state.ProfilesApplied, profile)
+	}
 
-        return s.save()
+	return s.save()
 }
 
 // RecordRemove removes a package from the state.
 func (s *StateTracker) RecordRemove(pkg string) error {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        delete(s.state.Packages, pkg)
-        s.state.LastModified = time.Now().UTC()
+	delete(s.state.Packages, pkg)
+	s.state.LastModified = time.Now().UTC()
 
-        return s.save()
+	return s.save()
 }
 
 // IsManaged checks if a package is managed by Nexus.
 func (s *StateTracker) IsManaged(pkg string) bool {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        _, exists := s.state.Packages[pkg]
-        return exists
+	_, exists := s.state.Packages[pkg]
+	return exists
 }
 
 // GetManagedPackages returns all Nexus-managed packages.
 func (s *StateTracker) GetManagedPackages() map[string]PackageState {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        // Return a copy
-        result := make(map[string]PackageState, len(s.state.Packages))
-        for k, v := range s.state.Packages {
-                result[k] = v
-        }
-        return result
+	// Return a copy
+	result := make(map[string]PackageState, len(s.state.Packages))
+	for k, v := range s.state.Packages {
+		result[k] = v
+	}
+	return result
 }
 
 // GetProfiles returns all applied profiles.
 func (s *StateTracker) GetProfiles() []string {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        return append([]string{}, s.state.ProfilesApplied...)
+	return append([]string{}, s.state.ProfilesApplied...)
 }
 
 // RecordWSLImport records a Nexus-managed WSL2 instance import.
 // Per V5: we track which WSL2 distributions were imported by Nexus
 // so that we can safely remove only our distros and detect drift.
 func (s *StateTracker) RecordWSLImport(name, image, version, sha256, installPath, family string) error {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        if s.state.WSLInstances == nil {
-                s.state.WSLInstances = make(map[string]WSLInstanceState)
-        }
+	if s.state.WSLInstances == nil {
+		s.state.WSLInstances = make(map[string]WSLInstanceState)
+	}
 
-        s.state.WSLInstances[name] = WSLInstanceState{
-                ImageName:     image,
-                ImageVersion:  version,
-                TarballSHA256: sha256,
-                InstallPath:   installPath,
-                Family:        family,
-                ImportedAt:    time.Now().UTC(),
-        }
-        s.state.LastModified = time.Now().UTC()
+	s.state.WSLInstances[name] = WSLInstanceState{
+		ImageName:     image,
+		ImageVersion:  version,
+		TarballSHA256: sha256,
+		InstallPath:   installPath,
+		Family:        family,
+		ImportedAt:    time.Now().UTC(),
+	}
+	s.state.LastModified = time.Now().UTC()
 
-        return s.save()
+	return s.save()
 }
 
 // RecordWSLRemove removes a WSL2 instance from the state.
 func (s *StateTracker) RecordWSLRemove(name string) error {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        if s.state.WSLInstances != nil {
-                delete(s.state.WSLInstances, name)
-        }
-        s.state.LastModified = time.Now().UTC()
+	if s.state.WSLInstances != nil {
+		delete(s.state.WSLInstances, name)
+	}
+	s.state.LastModified = time.Now().UTC()
 
-        return s.save()
+	return s.save()
 }
 
 // GetWSLInstances returns all Nexus-managed WSL2 instances.
 func (s *StateTracker) GetWSLInstances() map[string]WSLInstanceState {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        result := make(map[string]WSLInstanceState, len(s.state.WSLInstances))
-        for k, v := range s.state.WSLInstances {
-                result[k] = v
-        }
-        return result
+	result := make(map[string]WSLInstanceState, len(s.state.WSLInstances))
+	for k, v := range s.state.WSLInstances {
+		result[k] = v
+	}
+	return result
 }
 
 // IsWSLManaged checks if a WSL2 distribution is managed by Nexus.
 func (s *StateTracker) IsWSLManaged(name string) bool {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        _, exists := s.state.WSLInstances[name]
-        return exists
+	_, exists := s.state.WSLInstances[name]
+	return exists
 }
 
 // RecordDotfilesInstall records that Chezmoi was installed via Nexus.
 // Called by `nexus dotfiles install` after a successful Orchestrator run.
 // Preserves any existing Source/InitializedAt/LastAppliedAt/ManagedFiles.
 func (s *StateTracker) RecordDotfilesInstall(version string) error {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        s.state.Dotfiles.Installed = true
-        s.state.Dotfiles.Version = version
-        s.state.Dotfiles.InstalledAt = time.Now().UTC()
-        s.state.LastModified = time.Now().UTC()
+	s.state.Dotfiles.Installed = true
+	s.state.Dotfiles.Version = version
+	s.state.Dotfiles.InstalledAt = time.Now().UTC()
+	s.state.LastModified = time.Now().UTC()
 
-        return s.save()
+	return s.save()
 }
 
 // GetDotfilesState returns a copy of the current dotfiles state.
 func (s *StateTracker) GetDotfilesState() DotfilesState {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        return s.state.Dotfiles
+	return s.state.Dotfiles
 }
 
 // IsDotfilesInstalled reports whether Nexus previously installed Chezmoi.
 func (s *StateTracker) IsDotfilesInstalled() bool {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        return s.state.Dotfiles.Installed
+	return s.state.Dotfiles.Installed
 }
 
 // RecordDotfilesInit records that a dotfile source repository was bound.
 // Preserves the existing Version/InstalledAt fields.
 func (s *StateTracker) RecordDotfilesInit(source string) error {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        s.state.Dotfiles.Source = source
-        s.state.Dotfiles.InitializedAt = time.Now().UTC()
-        s.state.LastModified = time.Now().UTC()
+	s.state.Dotfiles.Source = source
+	s.state.Dotfiles.InitializedAt = time.Now().UTC()
+	s.state.LastModified = time.Now().UTC()
 
-        return s.save()
+	return s.save()
 }
 
 // RecordDotfilesApply records that dotfiles were applied from the bound source.
 // Preserves Source/InitializedAt; updates LastAppliedAt and ManagedFiles.
 func (s *StateTracker) RecordDotfilesApply(managedFiles []string) error {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        s.state.Dotfiles.LastAppliedAt = time.Now().UTC()
-        s.state.Dotfiles.ManagedFiles = managedFiles
-        s.state.LastModified = time.Now().UTC()
+	s.state.Dotfiles.LastAppliedAt = time.Now().UTC()
+	s.state.Dotfiles.ManagedFiles = managedFiles
+	s.state.LastModified = time.Now().UTC()
 
-        return s.save()
+	return s.save()
 }
 
 // RecordDotfilesAdd appends a single managed file path to the dotfiles state.
 func (s *StateTracker) RecordDotfilesAdd(path string) error {
-        s.mu.Lock()
-        defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-        for _, existing := range s.state.Dotfiles.ManagedFiles {
-                if existing == path {
-                        // Idempotent: already tracked, no-op.
-                        return nil
-                }
-        }
-        s.state.Dotfiles.ManagedFiles = append(s.state.Dotfiles.ManagedFiles, path)
-        s.state.LastModified = time.Now().UTC()
+	for _, existing := range s.state.Dotfiles.ManagedFiles {
+		if existing == path {
+			// Idempotent: already tracked, no-op.
+			return nil
+		}
+	}
+	s.state.Dotfiles.ManagedFiles = append(s.state.Dotfiles.ManagedFiles, path)
+	s.state.LastModified = time.Now().UTC()
 
-        return s.save()
+	return s.save()
 }
 
 // RecordDotfilesRemove clears the source binding (but keeps the install record
@@ -826,7 +828,7 @@ func (s *StateTracker) IsTeleported() bool {
 	return s.state.Teleported
 }
 
-// ShortKeyFingerprint returns the first 16 characters of an age public key,"}]
+// ShortKeyFingerprint returns the first 16 characters of an age public key,
 // safe for audit logs and status display. The full key is 62 chars; the
 // first 16 are enough for visual identification without leaking the full
 // recipient identifier. Exported so the dotfiles package can use it for
@@ -842,22 +844,22 @@ func ShortKeyFingerprint(pub string) string {
 // Atomic write: write to temp file, then rename. This prevents
 // corruption if the process crashes mid-write.
 func (s *StateTracker) save() error {
-        data, err := json.MarshalIndent(s.state, "", "  ")
-        if err != nil {
-                return fmt.Errorf("failed to marshal state: %w", err)
-        }
+	data, err := json.MarshalIndent(s.state, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal state: %w", err)
+	}
 
-        // Write to temp file first
-        tmpPath := s.path + ".tmp"
-        if err := os.WriteFile(tmpPath, data, 0644); err != nil {
-                return fmt.Errorf("failed to write state: %w", err)
-        }
+	// Write to temp file first
+	tmpPath := s.path + ".tmp"
+	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write state: %w", err)
+	}
 
-        // Atomic rename (POSIX guarantees this is atomic)
-        if err := os.Rename(tmpPath, s.path); err != nil {
-                os.Remove(tmpPath) // Clean up temp file
-                return fmt.Errorf("failed to commit state: %w", err)
-        }
+	// Atomic rename (POSIX guarantees this is atomic)
+	if err := os.Rename(tmpPath, s.path); err != nil {
+		os.Remove(tmpPath) // Clean up temp file
+		return fmt.Errorf("failed to commit state: %w", err)
+	}
 
-        return nil
+	return nil
 }

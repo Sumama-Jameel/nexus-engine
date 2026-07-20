@@ -729,10 +729,6 @@ func TestInitRunnerDeps_NeedsEnv(t *testing.T) {
 // a bare test env. The tests exercise the code paths (flag parsing,
 // dependency init, error handling) without requiring real installs.
 
-
-
-
-
 func TestRunList_FailsWithoutDeps(t *testing.T) {
 	resetGlobals(t)
 	withTempHome(t)
@@ -750,10 +746,6 @@ func TestRunList_JSON(t *testing.T) {
 		return runList(newRootCmd(), nil)
 	})
 }
-
-
-
-
 
 // ─── V3: profile create / fetch / remove / verify / apply ────────────────
 
@@ -822,17 +814,7 @@ func TestRunProfileRemove_JSON(t *testing.T) {
 	})
 }
 
-
-
-
-
 // ─── V5: WSL import / setup / remove / enter ──────────────────────────────
-
-
-
-
-
-
 
 // runWSLEnter spawns an interactive shell — we can't test it safely.
 // Instead, verify the function exists and is callable by checking the
@@ -840,42 +822,11 @@ func TestRunProfileRemove_JSON(t *testing.T) {
 
 // ─── V7: dotfiles install / init / remove / apply / diff / add / verify ───
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ─── V8: dotfiles push / pull / sync ──────────────────────────────────────
-
-
-
-
-
-
 
 // ─── V9: vault init / add / unlock / remove ───────────────────────────────
 
-
-
-
-
-
-
-
-
 // ─── runInit — complex 5-step flow ────────────────────────────────────────
-
-
-
 
 // ─── Safe V7/V8/V9 functions (no external command execution) ─────────────
 // These functions only manipulate state or call chezmoi/age which aren't
@@ -920,9 +871,6 @@ func TestRunDotfilesVaultRemove_JSON(t *testing.T) {
 }
 
 // runRemove, runSearch, runUpdate call package manager — preflight should
-
-
-
 
 func TestRunDotfilesDiff(t *testing.T) {
 	resetGlobals(t)
@@ -1107,8 +1055,6 @@ func TestRunDotfilesInit_JSON(t *testing.T) {
 // ─── V3: runProfileApply with dryRun ─────────────────────────────────────
 // Dry-run should not actually install anything, so it should be safe to test.
 
-
-
 // ─── V2: runList with populated state ─────────────────────────────────────
 
 func TestRunList_WithPackages(t *testing.T) {
@@ -1154,8 +1100,6 @@ func TestRunProfileList_JSON_Empty(t *testing.T) {
 		return runProfileList(newRootCmd(), nil)
 	})
 }
-
-
 
 // ─── V4/V5: runWSLImport/Setup/Remove (will fail gracefully on Linux) ──────
 

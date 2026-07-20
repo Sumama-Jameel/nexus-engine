@@ -15,12 +15,12 @@
 package engine
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
-	"time"
+
+	"github.com/Sumama-Jameel/nexus-engine/internal/netutil"
 )
 
 // ValidateURL enforces a basic SSRF-safe URL contract:
@@ -108,90 +108,14 @@ func ValidateURLAgainstHosts(rawURL string, allowedHosts map[string]bool) error 
 	return nil
 }
 
-// NewSSRFSafeTransport returns an http.Transport with a DialContext that
-// rejects connections to private/reserved IP ranges BEFORE the connection
-// is established. This is the SSRF protection layer for any HTTP fetcher
-// in the engine.
-//
-// Rejected ranges (per the V5 downloader implementation):
-//   - 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (RFC 1918)
-//   - 127.0.0.0/8 (Loopback)
-//   - 169.254.0.0/16 (Link-local)
-//   - ::1/128 (IPv6 loopback)
-//   - fc00::/7 (IPv6 unique local)
-//   - fe80::/10 (IPv6 link-local)
-//
-// Caller is responsible for setting an overall context timeout on the
-// returned Client. The transport itself only sets per-phase timeouts.
+// NewSSRFSafeTransport returns an http.Transport that rejects connections to
+// private/reserved IP ranges. Delegates to netutil.NewSSRFSafeTransport.
 func NewSSRFSafeTransport() *http.Transport {
-	return &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			host, port, err := net.SplitHostPort(addr)
-			if err != nil {
-				return nil, fmt.Errorf("invalid address '%s': %w", addr, err)
-			}
-
-			ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
-			if err != nil {
-				return nil, fmt.Errorf("failed to resolve '%s': %w", host, err)
-			}
-
-			for _, ip := range ips {
-				if IsPrivateIP(ip.IP) {
-					return nil, fmt.Errorf("resolved address %s is in a private/reserved range (rejected for security)", ip.IP)
-				}
-			}
-
-			dialer := &net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}
-			return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].IP.String(), port))
-		},
-		TLSHandshakeTimeout:   10 * time.Second,
-		ResponseHeaderTimeout: 30 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConns:          10,
-		IdleConnTimeout:       90 * time.Second,
-	}
+	return netutil.NewSSRFSafeTransport()
 }
 
 // IsPrivateIP reports whether an IP is in a private or reserved range.
-// Exported for callers that need to make their own SSRF decisions
-// (e.g., the dotfile source resolver checks DNS before git-cloning).
-//
-// See NewSSRFSafeTransport for the full list of rejected ranges.
+// Delegates to netutil.IsPrivateIP for shared implementation.
 func IsPrivateIP(ip net.IP) bool {
-	for _, network := range privateRanges {
-		if network.Contains(ip) {
-			return true
-		}
-	}
-	return false
-}
-
-// privateRanges is the canonical set of private/reserved CIDR ranges
-// that the Nexus engine refuses to connect to. It is initialized once
-// at package load — if any CIDR is malformed, the package fails to
-// compile (panic in init), which is the desired fail-fast behavior.
-var privateRanges []*net.IPNet
-
-func init() {
-	cidrs := []string{
-		"10.0.0.0/8",        // RFC 1918
-		"172.16.0.0/12",     // RFC 1918
-		"192.168.0.0/16",    // RFC 1918
-		"127.0.0.0/8",       // Loopback
-		"169.254.0.0/16",    // Link-local
-		"::1/128",           // IPv6 loopback
-		"fc00::/7",          // IPv6 unique local
-		"fe80::/10",         // IPv6 link-local
-	}
-	for _, c := range cidrs {
-		_, network, err := net.ParseCIDR(c)
-		if err != nil {
-			panic(fmt.Sprintf("netguard: invalid hardcoded CIDR '%s': %v", c, err))
-		}
-		privateRanges = append(privateRanges, network)
-	}
+	return netutil.IsPrivateIP(ip)
 }

@@ -16,17 +16,17 @@ package mode
 
 import (
 	"context"
+	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 )
 
 // fakeExec is a programmable ExecFunc for mode tests. It returns canned
 // responses or errors — same pattern as pushScript in internal/dotfiles.
 type fakeExec struct {
-	t        *testing.T
+	t         *testing.T
 	responses map[string]string
 	errs      map[string]error
 	callLog   []string
@@ -151,15 +151,15 @@ os_tweaks:
 	}
 
 	m, err := Resolve("gamer")
-		if err != nil {
-			t.Fatalf("Resolve('gamer') with user override: %v", err)
-		}
-		if m.Builtin {
-			t.Error("user mode should have Builtin=false")
-		}
-		// Wait — loadUserMode reads the file and sets Builtin=false. But
-		// loadUserMode is called by Resolve which checks user first. The
-		// user mode returns with Builtin=false. Good.
+	if err != nil {
+		t.Fatalf("Resolve('gamer') with user override: %v", err)
+	}
+	if m.Builtin {
+		t.Error("user mode should have Builtin=false")
+	}
+	// Wait — loadUserMode reads the file and sets Builtin=false. But
+	// loadUserMode is called by Resolve which checks user first. The
+	// user mode returns with Builtin=false. Good.
 }
 
 // ---------------------------------------------------------------------------
@@ -310,8 +310,8 @@ func TestResolvePowerPlan(t *testing.T) {
 func TestApplyDryRun(t *testing.T) {
 	f := newFake(t)
 	deps := ApplyDeps{
-		ExecFn: f.run,
-		GOOS:   "linux",
+		ExecFn:       f.run,
+		GOOS:         "linux",
 		ApplyProfile: func(_ context.Context, _ string, _ bool) error { return nil },
 	}
 	report, err := Apply(context.Background(), deps, "dev", ApplyOpts{DryRun: true})
@@ -336,8 +336,8 @@ func TestApplyDryRun(t *testing.T) {
 func TestApplyHappy(t *testing.T) {
 	f := newFake(t)
 	deps := ApplyDeps{
-		ExecFn: f.run,
-		GOOS:   "linux",
+		ExecFn:       f.run,
+		GOOS:         "linux",
 		ApplyProfile: func(_ context.Context, _ string, _ bool) error { return nil },
 	}
 	report, err := Apply(context.Background(), deps, "dev", ApplyOpts{})
@@ -370,8 +370,8 @@ stop_services: [network-manager]
 	os.WriteFile(filepath.Join(dir, "risky.yaml"), []byte(content), 0644)
 
 	deps := ApplyDeps{
-		ExecFn: func(_ context.Context, _ string, _ ...string) (string, error) { return "", nil },
-		GOOS:   "linux",
+		ExecFn:       func(_ context.Context, _ string, _ ...string) (string, error) { return "", nil },
+		GOOS:         "linux",
 		ApplyProfile: func(_ context.Context, _ string, _ bool) error { return nil },
 	}
 	_, err := Apply(context.Background(), deps, "risky", ApplyOpts{})
@@ -400,8 +400,8 @@ stop_services: [network-manager]
 	os.WriteFile(filepath.Join(dir, "risky.yaml"), []byte(content), 0644)
 
 	deps := ApplyDeps{
-		ExecFn: func(_ context.Context, _ string, _ ...string) (string, error) { return "", nil },
-		GOOS:   "linux",
+		ExecFn:       func(_ context.Context, _ string, _ ...string) (string, error) { return "", nil },
+		GOOS:         "linux",
 		ApplyProfile: func(_ context.Context, _ string, _ bool) error { return nil },
 	}
 	_, err := Apply(context.Background(), deps, "risky", ApplyOpts{AllowUnlistedServices: true})
@@ -417,9 +417,9 @@ stop_services: [network-manager]
 func TestRollbackNoPrevious(t *testing.T) {
 	tracker := newTracker(t)
 	deps := ApplyDeps{
-		ExecFn: func(_ context.Context, _ string, _ ...string) (string, error) { return "", nil },
-		GOOS:   "linux",
-		State:  tracker,
+		ExecFn:       func(_ context.Context, _ string, _ ...string) (string, error) { return "", nil },
+		GOOS:         "linux",
+		State:        tracker,
 		ApplyProfile: func(_ context.Context, _ string, _ bool) error { return nil },
 	}
 	_, err := Rollback(context.Background(), deps, ApplyOpts{})

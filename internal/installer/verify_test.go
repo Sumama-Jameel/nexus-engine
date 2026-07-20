@@ -190,10 +190,10 @@ func TestVerifyInstallation_MultiplePackages(t *testing.T) {
 		verified bool
 		status   string
 	}{
-		"git":         {true, "verified"},
-		"curl":        {true, "verified"},
-		"missing":     {false, "not_found"},
-		"custom-pkg":  {true, "verified"},
+		"git":        {true, "verified"},
+		"curl":       {true, "verified"},
+		"missing":    {false, "not_found"},
+		"custom-pkg": {true, "verified"},
 	}
 
 	for _, r := range results {
@@ -234,8 +234,8 @@ func TestVerifyBinary_KnownPackage(t *testing.T) {
 		{"htop", true, true},
 		{"tmux", true, true},
 		{"chezmoi", true, true},
-		{"git", false, false},   // exec fails → not verified
-		{"curl", false, false},  // exec fails → not verified
+		{"git", false, false},  // exec fails → not verified
+		{"curl", false, false}, // exec fails → not verified
 	}
 
 	for _, tt := range tests {

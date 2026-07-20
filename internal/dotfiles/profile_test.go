@@ -347,10 +347,10 @@ func TestApplyFromProfile_MixedPathsAddedAndSkipped(t *testing.T) {
 		Name: "base-dev",
 		Dotfiles: &manifest.DotfilesSpec{
 			ManagedPaths: []string{
-				filepath.Join(home, ".zshrc"),                  // safe → added
-				filepath.Join(home, ".ssh", "id_ed25519"),      // sensitive → skipped
-				filepath.Join(home, ".gitconfig"),              // safe → added
-				filepath.Join(home, ".netrc"),                  // sensitive → skipped
+				filepath.Join(home, ".zshrc"),             // safe → added
+				filepath.Join(home, ".ssh", "id_ed25519"), // sensitive → skipped
+				filepath.Join(home, ".gitconfig"),         // safe → added
+				filepath.Join(home, ".netrc"),             // sensitive → skipped
 			},
 		},
 	}

@@ -44,12 +44,12 @@ type CreateOpts struct {
 
 // CreateReport is the structured result of a container create.
 type CreateReport struct {
-	Name      string    `json:"name"`
-	Image     string    `json:"image"`
-	Family    string    `json:"family"`
-	Created   bool      `json:"created"`
-	RolledBack bool     `json:"rolled_back,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	Name       string    `json:"name"`
+	Image      string    `json:"image"`
+	Family     string    `json:"family"`
+	Created    bool      `json:"created"`
+	RolledBack bool      `json:"rolled_back,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 // Create runs distrobox-create with the given name and image.
@@ -99,8 +99,8 @@ func Create(ctx context.Context, deps CreateDeps, name string, opts CreateOpts) 
 			_ = rmErr
 			// Best-effort: log the rm error but still return the state error.
 			deps.Audit.Log(engine.AuditEntry{
-				Action: "CONTAINER_CREATE_ROLLED_BACK",
-				Result: "failure",
+				Action:  "CONTAINER_CREATE_ROLLED_BACK",
+				Result:  "failure",
 				Package: fmt.Sprintf("container %q: state write failed (%v); auto-removed", name, stateErr),
 			})
 			report.RolledBack = true
@@ -109,8 +109,8 @@ func Create(ctx context.Context, deps CreateDeps, name string, opts CreateOpts) 
 
 		if deps.Audit != nil {
 			deps.Audit.Log(engine.AuditEntry{
-				Action: "CONTAINER_CREATE",
-				Result: "success",
+				Action:  "CONTAINER_CREATE",
+				Result:  "success",
 				Package: fmt.Sprintf("container %q (%s)", name, opts.Image),
 			})
 		}
@@ -129,8 +129,8 @@ func RollbackContainer(ctx context.Context, deps CreateDeps, name string) error 
 	_, err := deps.ExecFn(ctx, "distrobox", "rm", "--force", name)
 	if deps.Audit != nil {
 		deps.Audit.Log(engine.AuditEntry{
-			Action: "CONTAINER_CREATE_ROLLED_BACK",
-			Result: "failure",
+			Action:  "CONTAINER_CREATE_ROLLED_BACK",
+			Result:  "failure",
 			Package: fmt.Sprintf("container %q: auto-removed", name),
 		})
 	}

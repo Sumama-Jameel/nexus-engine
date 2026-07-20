@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
+	"github.com/Sumama-Jameel/nexus-engine/internal/engineutil"
 )
 
 // ExecFunc is the Zero-Trust execution gate. Type alias so it's the
@@ -68,9 +69,9 @@ type ApplyOpts struct {
 // output and live ApplyReport so the operator can see exactly what the
 // engine did (or would have done).
 type Step struct {
-	Name    string `json:"name"`              // profile | dotfiles | stop_service | start_service | os_tweaks
-	Detail  string `json:"detail,omitempty"`  // e.g., profile name, service name
-	Outcome string `json:"outcome"`           // success | failure | skipped
+	Name    string `json:"name"`             // profile | dotfiles | stop_service | start_service | os_tweaks
+	Detail  string `json:"detail,omitempty"` // e.g., profile name, service name
+	Outcome string `json:"outcome"`          // success | failure | skipped
 	Error   string `json:"error,omitempty"`
 }
 
@@ -91,15 +92,15 @@ type ApplyReport struct {
 // Apply atomically switches the system to the named mode.
 //
 // The pipeline (ADR 010 § "Apply pipeline"):
-//   1. Validate the mode YAML (already done by Resolve)
-//   2. Validate service names against the allowlist
-//   3. Snapshot current mode into Previous
-//   4. Apply the target profile (callback)
-//   5. Re-bind dotfiles if the mode specifies a source (callback)
-//   6. Stop listed services
-//   7. Start listed services
-//   8. Apply OS tweaks
-//   9. Persist ActiveMode + LastMode* to state.json
+//  1. Validate the mode YAML (already done by Resolve)
+//  2. Validate service names against the allowlist
+//  3. Snapshot current mode into Previous
+//  4. Apply the target profile (callback)
+//  5. Re-bind dotfiles if the mode specifies a source (callback)
+//  6. Stop listed services
+//  7. Start listed services
+//  8. Apply OS tweaks
+//  9. Persist ActiveMode + LastMode* to state.json
 //  10. Audit MODE_APPLY
 //
 // On any failure: no auto-rollback. The previous mode stays Active until
@@ -405,12 +406,5 @@ func planSteps(m *Mode, goos string, allowUnlisted bool, audit *engine.AuditLogg
 // Failures are best-effort and do not propagate. Same shape as the
 // helper in internal/dotfiles/sync.go so the audit format is uniform.
 func logAudit(a *engine.AuditLogger, action, result, detail string) {
-	if a == nil {
-		return
-	}
-	_ = a.Log(engine.AuditEntry{
-		Action:  action,
-		Result:  result,
-		Package: detail,
-	})
+	engineutil.LogAudit(a, action, result, detail)
 }

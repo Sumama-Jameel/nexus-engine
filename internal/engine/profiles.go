@@ -62,12 +62,12 @@ type DistroCompatibility struct {
 
 // ProfileSuggestion is a profile recommendation returned by SuggestProfile.
 type ProfileSuggestion struct {
-	Name        string             `json:"name"`
-	Version     string             `json:"version"`
-	Description string             `json:"description"`
-	Author      string             `json:"author"`
+	Name          string              `json:"name"`
+	Version       string              `json:"version"`
+	Description   string              `json:"description"`
+	Author        string              `json:"author"`
 	Compatibility DistroCompatibility `json:"compatibility"`
-	Score       int                `json:"score"`
+	Score         int                 `json:"score"`
 }
 
 // CheckDistroCompatibility evaluates how well a profile fits the current system.

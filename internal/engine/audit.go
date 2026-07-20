@@ -15,163 +15,203 @@
 package engine
 
 import (
-        "encoding/json"
-        "fmt"
-        "os"
-        "path/filepath"
-        "time"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
 // AuditEntry represents a single audit log entry in the Nexus audit trail.
 // Each entry is serialized as a JSON line (JSONL format) for efficient parsing
 // and is append-only — entries are never modified after being written.
 type AuditEntry struct {
-        // Timestamp is the UTC timestamp of the audit event, formatted as
-        // RFC3339Nano for sub-millisecond precision.
-        Timestamp string `json:"timestamp"`
-        // Action is the category of operation performed. Valid values include
-        // "install", "remove", "update", "verify", "wsl_import", "wsl_remove",
-        // and "wsl_setup".
-        Action string `json:"action"`
-        // Package is the name of the package targeted by the action.
-        Package string `json:"package"`
-        // Result is the outcome of the action: "success", "failure", or "skipped".
-        Result string `json:"result"`
-        // PackageManager is the package manager used for the action (e.g.,
-        // "apt-get", "dnf"), omitted for non-package operations.
-        PackageManager string `json:"package_manager,omitempty"`
-        // Profile is the Nexus profile that triggered the action, omitted for
-        // operations not associated with a profile.
-        Profile string `json:"profile,omitempty"`
-        // DurationMs is the wall-clock duration of the action in milliseconds,
-        // used for performance tracking and slow-operation detection.
-        DurationMs int64 `json:"duration_ms,omitempty"`
-        // Verified indicates whether a post-install verification check confirmed
-        // the package is functional, omitted for actions that do not verify.
-        Verified bool `json:"verified,omitempty"`
-        // Error contains the error message if the action failed, omitted on success.
-        Error string `json:"error,omitempty"`
-        // Target is the WSL distribution name or other operation-specific target,
-        // used for WSL import/remove and similar targeted operations.
-        Target string `json:"target,omitempty"`
+	// Timestamp is the UTC timestamp of the audit event, formatted as
+	// RFC3339Nano for sub-millisecond precision.
+	Timestamp string `json:"timestamp"`
+	// Action is the category of operation performed. Valid values include
+	// "install", "remove", "update", "verify", "wsl_import", "wsl_remove",
+	// and "wsl_setup".
+	Action string `json:"action"`
+	// Package is the name of the package targeted by the action.
+	Package string `json:"package"`
+	// Result is the outcome of the action: "success", "failure", or "skipped".
+	Result string `json:"result"`
+	// PackageManager is the package manager used for the action (e.g.,
+	// "apt-get", "dnf"), omitted for non-package operations.
+	PackageManager string `json:"package_manager,omitempty"`
+	// Profile is the Nexus profile that triggered the action, omitted for
+	// operations not associated with a profile.
+	Profile string `json:"profile,omitempty"`
+	// DurationMs is the wall-clock duration of the action in milliseconds,
+	// used for performance tracking and slow-operation detection.
+	DurationMs int64 `json:"duration_ms,omitempty"`
+	// Verified indicates whether a post-install verification check confirmed
+	// the package is functional, omitted for actions that do not verify.
+	Verified bool `json:"verified,omitempty"`
+	// Error contains the error message if the action failed, omitted on success.
+	Error string `json:"error,omitempty"`
+	// Target is the WSL distribution name or other operation-specific target,
+	// used for WSL import/remove and similar targeted operations.
+	Target string `json:"target,omitempty"`
 }
 
 // AuditLogger provides an append-only, tamper-evident audit trail.
 // Per the Zero-Trust model: every action must be traceable.
 // The file is opened with O_APPEND — existing lines are never modified.
 type AuditLogger struct {
-        path string
-        file *os.File
+	path string
+	file *os.File
 }
 
 // NewAuditLogger creates or opens the audit log at ~/.nexus/audit.log.
 func NewAuditLogger() (*AuditLogger, error) {
-        homeDir, err := os.UserHomeDir()
-        if err != nil {
-                return nil, fmt.Errorf("failed to determine home directory: %w", err)
-        }
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine home directory: %w", err)
+	}
 
-        nexusDir := filepath.Join(homeDir, ".nexus")
-        os.MkdirAll(nexusDir, 0755)
+	nexusDir := filepath.Join(homeDir, ".nexus")
+	if err := os.MkdirAll(nexusDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create nexus directory %s: %w", nexusDir, err)
+	}
 
-	path := filepath.Join(nexusDir, "audit.log")
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		path = resolved
+	path, err := resolveInNexusDir(nexusDir, "audit.log")
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve audit log path: %w", err)
 	}
 
 	// Open with O_APPEND and O_CREATE — append-only, create if missing
 	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-        if err != nil {
-                return nil, fmt.Errorf("failed to open audit log: %w", err)
-        }
+	if err != nil {
+		return nil, fmt.Errorf("failed to open audit log: %w", err)
+	}
 
-        return &AuditLogger{path: path, file: file}, nil
+	return &AuditLogger{path: path, file: file}, nil
 }
 
 // Log writes a structured audit entry to the log file.
 // Each entry is a single JSON line (JSONL format) for easy parsing.
 func (a *AuditLogger) Log(entry AuditEntry) error {
-        if a.file == nil {
-                return fmt.Errorf("audit log not initialized")
-        }
+	if a.file == nil {
+		return fmt.Errorf("audit log not initialized")
+	}
 
-        entry.Timestamp = time.Now().UTC().Format(time.RFC3339Nano)
+	entry.Timestamp = time.Now().UTC().Format(time.RFC3339Nano)
 
-        data, err := json.Marshal(entry)
-        if err != nil {
-                return fmt.Errorf("failed to marshal audit entry: %w", err)
-        }
+	data, err := json.Marshal(entry)
+	if err != nil {
+		return fmt.Errorf("failed to marshal audit entry: %w", err)
+	}
 
-        data = append(data, '\n')
+	data = append(data, '\n')
 
-        if _, err := a.file.Write(data); err != nil {
-                return fmt.Errorf("failed to write audit entry: %w", err)
-        }
+	if _, err := a.file.Write(data); err != nil {
+		return fmt.Errorf("failed to write audit entry: %w", err)
+	}
 
-        // Sync to ensure durability
-        return a.file.Sync()
+	// Sync to ensure durability
+	return a.file.Sync()
 }
 
 // Close closes the audit log file.
 func (a *AuditLogger) Close() error {
-        if a.file != nil {
-                return a.file.Close()
-        }
-        return nil
+	if a.file != nil {
+		return a.file.Close()
+	}
+	return nil
 }
 
+// maxAuditReadBytes is the maximum number of bytes to read from the audit
+// log when looking for the last N entries. This prevents loading the entire
+// file into memory for large logs (months of use). 10 MB covers roughly
+// 50,000+ JSONL entries.
+const maxAuditReadBytes = 10 * 1024 * 1024
+
 // ReadAuditLog reads the last N entries from the audit log.
+// For large files, only the last 10 MB is read into memory.
 func ReadAuditLog(n int) ([]AuditEntry, error) {
-        homeDir, err := os.UserHomeDir()
-        if err != nil {
-                return nil, err
-        }
-
-	path := filepath.Join(homeDir, ".nexus", "audit.log")
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		path = resolved
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
 	}
-	data, err := os.ReadFile(path)
-        if err != nil {
-                if os.IsNotExist(err) {
-                        return []AuditEntry{}, nil
-                }
-                return nil, err
-        }
 
-        lines := splitLines(string(data))
-        if n > 0 && len(lines) > n {
-                lines = lines[len(lines)-n:]
-        }
+	nexusDir := filepath.Join(homeDir, ".nexus")
+	path, err := resolveInNexusDir(nexusDir, "audit.log")
+	if err != nil {
+		return nil, err
+	}
 
-        var entries []AuditEntry
-        for _, line := range lines {
-                if line == "" {
-                        continue
-                }
-                var entry AuditEntry
-                if err := json.Unmarshal([]byte(line), &entry); err == nil {
-                        entries = append(entries, entry)
-                }
-        }
+	file, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []AuditEntry{}, nil
+		}
+		return nil, err
+	}
+	defer file.Close()
 
-        return entries, nil
+	// Read the tail of the file (last maxAuditReadBytes) to avoid
+	// loading the entire file for large logs.
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	readSize := stat.Size()
+	offset := int64(0)
+	if readSize > maxAuditReadBytes {
+		offset = readSize - maxAuditReadBytes
+		readSize = maxAuditReadBytes
+	}
+
+	buf := make([]byte, readSize)
+	if _, err := file.ReadAt(buf, offset); err != nil && err.Error() != "EOF" {
+		return nil, err
+	}
+
+	// If we skipped ahead, find the first complete line (skip partial first line).
+	data := string(buf)
+	if offset > 0 {
+		if idx := strings.IndexByte(data, '\n'); idx >= 0 {
+			data = data[idx+1:]
+		}
+	}
+
+	lines := splitLines(data)
+	if n > 0 && len(lines) > n {
+		lines = lines[len(lines)-n:]
+	}
+
+	var entries []AuditEntry
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		var entry AuditEntry
+		if err := json.Unmarshal([]byte(line), &entry); err == nil {
+			entries = append(entries, entry)
+		}
+	}
+
+	return entries, nil
 }
 
 func splitLines(s string) []string {
-        var lines []string
-        start := 0
-        for i := 0; i < len(s); i++ {
-                if s[i] == '\n' {
-                        line := s[start:i]
-                        if line != "" {
-                                lines = append(lines, line)
-                        }
-                        start = i + 1
-                }
-        }
-        if start < len(s) {
-                lines = append(lines, s[start:])
-        }
-        return lines
+	var lines []string
+	start := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\n' {
+			line := s[start:i]
+			if line != "" {
+				lines = append(lines, line)
+			}
+			start = i + 1
+		}
+	}
+	if start < len(s) {
+		lines = append(lines, s[start:])
+	}
+	return lines
 }

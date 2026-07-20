@@ -33,8 +33,6 @@ type StateTracker interface {
 	GetContainerNames() []string
 }
 
-
-
 // Container records a Nexus-managed Distrobox container. Every field is
 // validated before being persisted — tampered state files fail on load.
 type Container struct {
@@ -50,14 +48,6 @@ type Container struct {
 	// SourcePath is where the container lives in the filesystem.
 	// Always under $HOME/.local/share/distrobox/.
 	SourcePath string `json:"source_path,omitempty"`
-}
-
-// ContainerState is the persistent state stored in state.json.
-type ContainerState struct {
-	Name      string    `json:"name"`
-	Image     string    `json:"image"`
-	Family    string    `json:"family"`
-	CreatedAt time.Time `json:"created_at"`
 }
 
 // validateName checks the Distrobox naming convention:

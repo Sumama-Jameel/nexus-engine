@@ -27,12 +27,12 @@ import (
 // canned responses based on the (cmd, args) tuple, or an error if one was
 // pre-registered.
 type pushScript struct {
-	t            *testing.T
-	responses    map[string]string // "cmd arg1 arg2" → stdout
-	errors       map[string]error  // "cmd arg1 arg2" → error
-	callLog      []string
-	stagedFiles  []string // files to "discover" when git diff --cached is called
-	filesOnDisk  map[string]string // fake chezmoi source dir contents
+	t           *testing.T
+	responses   map[string]string // "cmd arg1 arg2" → stdout
+	errors      map[string]error  // "cmd arg1 arg2" → error
+	callLog     []string
+	stagedFiles []string          // files to "discover" when git diff --cached is called
+	filesOnDisk map[string]string // fake chezmoi source dir contents
 }
 
 func (p *pushScript) run(ctx context.Context, cmd string, args ...string) (string, error) {

@@ -44,13 +44,13 @@ type RootFSImage struct {
 
 // ImportConfig is a stub on Linux. See import.go (windows) for the real type.
 type ImportConfig struct {
-	DistroName    string
-	InstallPath   string
-	TarballPath   string
-	Image         *RootFSImage
-	SkipDownload  bool
-	SkipVerify    bool
-	DryRun        bool
+	DistroName   string
+	InstallPath  string
+	TarballPath  string
+	Image        *RootFSImage
+	SkipDownload bool
+	SkipVerify   bool
+	DryRun       bool
 }
 
 // ImportResult is a stub on Linux. See import.go (windows) for the real type.

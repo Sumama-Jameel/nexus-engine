@@ -175,15 +175,15 @@ func isSensitivePath(path string) bool {
 	// Match by substring on the FULL path, not just the basename \u2014
 	// ~/.ssh/id_rsa must match `.ssh/id_` even though basename is `id_rsa`.
 	sensitiveMarkers := []string{
-		".ssh/id_",          // private SSH keys
-		".ssh/known_hosts",  // SSH host fingerprints
-		".gnupg/",           // GPG keys and config
-		".gnupg-private/",   // GPG private keys (alternative location)
-		".aws/credentials",  // AWS access keys
-		".azure/",           // Azure CLI credentials
-		".gcloud/",          // GCP credentials
-		".config/gh/hosts",  // GitHub CLI hosts
-		".netrc",            // legacy plaintext credentials
+		".ssh/id_",            // private SSH keys
+		".ssh/known_hosts",    // SSH host fingerprints
+		".gnupg/",             // GPG keys and config
+		".gnupg-private/",     // GPG private keys (alternative location)
+		".aws/credentials",    // AWS access keys
+		".azure/",             // Azure CLI credentials
+		".gcloud/",            // GCP credentials
+		".config/gh/hosts",    // GitHub CLI hosts
+		".netrc",              // legacy plaintext credentials
 		".docker/config.json", // Docker registry auth
 	}
 	for _, marker := range sensitiveMarkers {

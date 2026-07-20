@@ -117,7 +117,7 @@ func loadBuiltin(name string) (*Mode, error) {
 // joined error so a single broken embed does not silently drop one mode.
 func loadAllBuiltins() ([]*Mode, error) {
 	var (
-		out []*Mode
+		out  []*Mode
 		errs []string
 	)
 	for _, name := range BuiltinNames() {
@@ -197,9 +197,9 @@ func loadAllUserModes() ([]*Mode, error) {
 			// operator should see the broken file in `nexus mode list`
 			// diagnostics, so we surface the error in the SourcePath.
 			out = append(out, &Mode{
-				Name:       name,
+				Name:        name,
 				Description: "(invalid: " + err.Error() + ")",
-				SourcePath: filepath.Join(dir, e.Name()),
+				SourcePath:  filepath.Join(dir, e.Name()),
 			})
 			continue
 		}

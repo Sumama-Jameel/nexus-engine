@@ -246,10 +246,10 @@ func TestConstructors_TableDriven(t *testing.T) {
 	cause := errors.New("root cause")
 
 	tests := []struct {
-		name    string
-		builder func(string, error) *NexusError
-		message string
-		wantCode string
+		name      string
+		builder   func(string, error) *NexusError
+		message   string
+		wantCode  string
 		wantStage string
 	}{
 		{
@@ -326,10 +326,10 @@ func TestConstructors_TableDriven(t *testing.T) {
 
 func TestConstructors_TableDriven_NilCause(t *testing.T) {
 	tests := []struct {
-		name    string
-		builder func(string, error) *NexusError
-		message string
-		wantCode string
+		name      string
+		builder   func(string, error) *NexusError
+		message   string
+		wantCode  string
 		wantStage string
 	}{
 		{
@@ -396,8 +396,8 @@ func TestConstructors_TableDriven_NilCause(t *testing.T) {
 
 func TestNexusError_ErrorsAs(t *testing.T) {
 	tests := []struct {
-		name    string
-		err     *NexusError
+		name string
+		err  *NexusError
 	}{
 		{
 			name: "PreflightError as NexusError",

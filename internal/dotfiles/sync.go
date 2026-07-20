@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
+	"github.com/Sumama-Jameel/nexus-engine/internal/engineutil"
 )
 
 // SyncDeps holds the dependencies for push/pull/sync operations.
@@ -30,11 +31,11 @@ import (
 // Token field is optional: when set (and the source is HTTPS), it is
 // injected into the remote URL for this exec call only — never persisted.
 type SyncDeps struct {
-	ExecFn     ExecFunc
-	State      *engine.StateTracker
-	Audit      *engine.AuditLogger
-	Token      string // PAT for HTTPS auth; empty = use system default (SSH key or git creds)
-	SkipSecretScan bool // when true, skip pre-push secret scan (used by --force)
+	ExecFn         ExecFunc
+	State          *engine.StateTracker
+	Audit          *engine.AuditLogger
+	Token          string // PAT for HTTPS auth; empty = use system default (SSH key or git creds)
+	SkipSecretScan bool   // when true, skip pre-push secret scan (used by --force)
 }
 
 // SyncReport is the structured result of a push, pull, or sync operation.
@@ -42,17 +43,17 @@ type SyncDeps struct {
 // Fields are populated best-effort. Callers should check Error before
 // trusting the other fields.
 type SyncReport struct {
-	Operation   string    `json:"operation"`              // "push" | "pull" | "sync"
-	DryRun      bool      `json:"dry_run,omitempty"`
-	Source      string    `json:"source"`
-	CommitSHA   string    `json:"commit_sha,omitempty"`
-	FilesScanned int      `json:"files_scanned,omitempty"`
-	SecretsFound []Match  `json:"secrets_found,omitempty"` // empty when none / scan skipped
-	Pushed      bool      `json:"pushed,omitempty"`
-	Pulled      bool      `json:"pulled,omitempty"`
-	Applied     bool      `json:"applied,omitempty"`
-	StartedAt   time.Time `json:"started_at"`
-	CompletedAt time.Time `json:"completed_at"`
+	Operation    string    `json:"operation"` // "push" | "pull" | "sync"
+	DryRun       bool      `json:"dry_run,omitempty"`
+	Source       string    `json:"source"`
+	CommitSHA    string    `json:"commit_sha,omitempty"`
+	FilesScanned int       `json:"files_scanned,omitempty"`
+	SecretsFound []Match   `json:"secrets_found,omitempty"` // empty when none / scan skipped
+	Pushed       bool      `json:"pushed,omitempty"`
+	Pulled       bool      `json:"pulled,omitempty"`
+	Applied      bool      `json:"applied,omitempty"`
+	StartedAt    time.Time `json:"started_at"`
+	CompletedAt  time.Time `json:"completed_at"`
 }
 
 // Push stages all local chezmoi changes, scans them for secrets, commits,
@@ -396,14 +397,7 @@ func isNothingToCommit(err error) bool {
 }
 
 // logAudit writes an audit entry when an AuditLogger is provided.
-// Failures here are best-effort and don't propagate.
+// Failures are best-effort and don't propagate.
 func logAudit(a *engine.AuditLogger, action, result, detail string) {
-	if a == nil {
-		return
-	}
-	_ = a.Log(engine.AuditEntry{
-		Action:  action,
-		Result:  result,
-		Package: detail, // store commit SHA / URL in Package field for traceability
-	})
+	engineutil.LogAudit(a, action, result, detail)
 }

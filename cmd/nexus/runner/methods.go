@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
+	"github.com/Sumama-Jameel/nexus-engine/internal/engineutil"
 	"github.com/Sumama-Jameel/nexus-engine/internal/installer"
 	"github.com/Sumama-Jameel/nexus-engine/pkg/manifest"
 )
@@ -214,10 +215,7 @@ func (d *Dependencies) ApplyProfile(ctx context.Context, name string) (*installe
 }
 
 func boolToResult(b bool) string {
-	if b {
-		return "success"
-	}
-	return "failure"
+	return engineutil.BoolToResult(b)
 }
 
 // logAudit writes an audit entry if the AuditLogger is available.

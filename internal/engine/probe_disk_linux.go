@@ -20,16 +20,16 @@ import "syscall"
 
 // probeDisk uses syscall.Statfs to get disk information on Linux.
 func probeDisk(info *SystemInfo) error {
-        var stat syscall.Statfs_t
-        if err := syscall.Statfs("/", &stat); err != nil {
-                return err
-        }
-        // Total and used space in bytes
-        totalBytes := stat.Blocks * uint64(stat.Bsize)
-        availBytes := stat.Bavail * uint64(stat.Bsize)
-        usedBytes := totalBytes - availBytes
+	var stat syscall.Statfs_t
+	if err := syscall.Statfs("/", &stat); err != nil {
+		return err
+	}
+	// Total and used space in bytes
+	totalBytes := stat.Blocks * uint64(stat.Bsize)
+	availBytes := stat.Bavail * uint64(stat.Bsize)
+	usedBytes := totalBytes - availBytes
 
-        info.DiskTotalGB = float64(totalBytes) / 1024 / 1024 / 1024
-        info.DiskUsedGB = float64(usedBytes) / 1024 / 1024 / 1024
-        return nil
+	info.DiskTotalGB = float64(totalBytes) / 1024 / 1024 / 1024
+	info.DiskUsedGB = float64(usedBytes) / 1024 / 1024 / 1024
+	return nil
 }

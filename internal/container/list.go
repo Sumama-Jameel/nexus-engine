@@ -27,12 +27,12 @@ type ListReport struct {
 
 // ContainerInfo is a single entry from distrobox list --json.
 type ContainerInfo struct {
-	Name        string `json:"name"`
-	Status      string `json:"status"` // "running" | "created" | "exited"
-	Image       string `json:"image"`
-	Created     string `json:"created"`
-	Command     string `json:"command"`
-	Managed     bool   `json:"managed"` // true if in Nexus state
+	Name    string `json:"name"`
+	Status  string `json:"status"` // "running" | "created" | "exited"
+	Image   string `json:"image"`
+	Created string `json:"created"`
+	Command string `json:"command"`
+	Managed bool   `json:"managed"` // true if in Nexus state
 }
 
 // List returns all Distrobox containers, annotated with managed status.

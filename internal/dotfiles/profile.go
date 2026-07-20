@@ -38,12 +38,12 @@ type ProfileDeps struct {
 // matter for their use case (e.g., 'nexus init' treats dotfile failures
 // as warnings, not fatal errors).
 type ProfileApplyReport struct {
-	SourceBound bool     `json:"source_bound"`
-	Applied     bool     `json:"applied"`
-	Pushed      bool     `json:"pushed,omitempty"` // V8: true if sync_on_apply triggered a push
-	AddedPaths  []string `json:"added_paths,omitempty"`
+	SourceBound  bool     `json:"source_bound"`
+	Applied      bool     `json:"applied"`
+	Pushed       bool     `json:"pushed,omitempty"` // V8: true if sync_on_apply triggered a push
+	AddedPaths   []string `json:"added_paths,omitempty"`
 	SkippedPaths []string `json:"skipped_paths,omitempty"` // sensitive paths that need --force
-	Warnings    []string `json:"warnings,omitempty"`
+	Warnings     []string `json:"warnings,omitempty"`
 }
 
 // ApplyFromProfile applies a profile's dotfiles section end-to-end:

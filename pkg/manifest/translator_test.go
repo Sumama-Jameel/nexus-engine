@@ -22,8 +22,8 @@ import "testing"
 
 func TestResolveTarget_ExactMatch(t *testing.T) {
 	tests := []struct {
-		name string
-		pm   string
+		name   string
+		pm     string
 		family string
 	}{
 		{name: "apt maps to debian", pm: "apt", family: "debian"},
@@ -147,9 +147,9 @@ func TestResolveTarget_EmptyTargets(t *testing.T) {
 
 func TestResolveTargetFamily(t *testing.T) {
 	tests := []struct {
-		pm      string
-		family  string
-		ok      bool
+		pm     string
+		family string
+		ok     bool
 	}{
 		{pm: "apt", family: "debian", ok: true},
 		{pm: "pacman", family: "arch", ok: true},

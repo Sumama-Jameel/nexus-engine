@@ -17,33 +17,33 @@
 package engine
 
 import (
-        "syscall"
-        "unsafe"
+	"syscall"
+	"unsafe"
 )
 
 // probeDisk uses GetDiskFreeSpaceEx to get disk information on Windows.
 func probeDisk(info *SystemInfo) error {
-        var freeBytesAvailable int64
-        var totalNumberOfBytes int64
-        var totalNumberOfFreeBytes int64
+	var freeBytesAvailable int64
+	var totalNumberOfBytes int64
+	var totalNumberOfFreeBytes int64
 
-        kernel32 := syscall.NewLazyDLL("kernel32.dll")
-        getDiskFreeSpaceEx := kernel32.NewProc("GetDiskFreeSpaceExW")
+	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+	getDiskFreeSpaceEx := kernel32.NewProc("GetDiskFreeSpaceExW")
 
-        rootPathName, _ := syscall.UTF16PtrFromString("C:\\")
+	rootPathName, _ := syscall.UTF16PtrFromString("C:\\")
 
-        ret, _, err := getDiskFreeSpaceEx.Call(
-                uintptr(unsafe.Pointer(rootPathName)),
-                uintptr(unsafe.Pointer(&freeBytesAvailable)),
-                uintptr(unsafe.Pointer(&totalNumberOfBytes)),
-                uintptr(unsafe.Pointer(&totalNumberOfFreeBytes)),
-        )
-        if ret == 0 {
-                return err
-        }
+	ret, _, err := getDiskFreeSpaceEx.Call(
+		uintptr(unsafe.Pointer(rootPathName)),
+		uintptr(unsafe.Pointer(&freeBytesAvailable)),
+		uintptr(unsafe.Pointer(&totalNumberOfBytes)),
+		uintptr(unsafe.Pointer(&totalNumberOfFreeBytes)),
+	)
+	if ret == 0 {
+		return err
+	}
 
-        usedBytes := totalNumberOfBytes - freeBytesAvailable
-        info.DiskTotalGB = float64(totalNumberOfBytes) / 1024 / 1024 / 1024
-        info.DiskUsedGB = float64(usedBytes) / 1024 / 1024 / 1024
-        return nil
+	usedBytes := totalNumberOfBytes - freeBytesAvailable
+	info.DiskTotalGB = float64(totalNumberOfBytes) / 1024 / 1024 / 1024
+	info.DiskUsedGB = float64(usedBytes) / 1024 / 1024 / 1024
+	return nil
 }

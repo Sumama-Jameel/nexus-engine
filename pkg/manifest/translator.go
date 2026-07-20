@@ -24,46 +24,46 @@ package manifest
 //
 // Returns nil only if the profile has no targets at all.
 func ResolveTarget(profile *NexusProfile, packageManager string) *TargetConfig {
-        // Map package manager to family
-        pmToFamily := map[string]string{
-                "apt":    "debian",
-                "pacman": "arch",
-                "dnf":    "fedora",
-                "yum":    "fedora",
-                "apk":    "alpine",
-        }
+	// Map package manager to family
+	pmToFamily := map[string]string{
+		"apt":    "debian",
+		"pacman": "arch",
+		"dnf":    "fedora",
+		"yum":    "fedora",
+		"apk":    "alpine",
+	}
 
-        targetFamily := pmToFamily[packageManager]
+	targetFamily := pmToFamily[packageManager]
 
-        // Priority 1: Exact match
-        for i := range profile.Targets {
-                if profile.Targets[i].Family == targetFamily {
-                        return &profile.Targets[i]
-                }
-        }
+	// Priority 1: Exact match
+	for i := range profile.Targets {
+		if profile.Targets[i].Family == targetFamily {
+			return &profile.Targets[i]
+		}
+	}
 
-        // Priority 2: "ubuntu" maps to "debian" target
-        if targetFamily == "debian" {
-                for i := range profile.Targets {
-                        if profile.Targets[i].Family == "ubuntu" {
-                                return &profile.Targets[i]
-                        }
-                }
-        }
+	// Priority 2: "ubuntu" maps to "debian" target
+	if targetFamily == "debian" {
+		for i := range profile.Targets {
+			if profile.Targets[i].Family == "ubuntu" {
+				return &profile.Targets[i]
+			}
+		}
+	}
 
-        // Priority 3: Generic "linux" target
-        for i := range profile.Targets {
-                if profile.Targets[i].Family == "linux" {
-                        return &profile.Targets[i]
-                }
-        }
+	// Priority 3: Generic "linux" target
+	for i := range profile.Targets {
+		if profile.Targets[i].Family == "linux" {
+			return &profile.Targets[i]
+		}
+	}
 
-        // Priority 4: First target
-        if len(profile.Targets) > 0 {
-                return &profile.Targets[0]
-        }
+	// Priority 4: First target
+	if len(profile.Targets) > 0 {
+		return &profile.Targets[0]
+	}
 
-        return nil
+	return nil
 }
 
 // ResolveTargetFamily maps a package manager name (e.g., "apt", "pacman") to
@@ -71,40 +71,40 @@ func ResolveTarget(profile *NexusProfile, packageManager string) *TargetConfig {
 // family string and true if the mapping exists, or an empty string and false
 // if the package manager is not recognized.
 func ResolveTargetFamily(packageManager string) (string, bool) {
-        pmToFamily := map[string]string{
-                "apt":    "debian",
-                "pacman": "arch",
-                "dnf":    "fedora",
-                "yum":    "fedora",
-                "apk":    "alpine",
-        }
-        f, ok := pmToFamily[packageManager]
-        return f, ok
+	pmToFamily := map[string]string{
+		"apt":    "debian",
+		"pacman": "arch",
+		"dnf":    "fedora",
+		"yum":    "fedora",
+		"apk":    "alpine",
+	}
+	f, ok := pmToFamily[packageManager]
+	return f, ok
 }
 
 // CountPackages returns the total number of unique packages across all
 // targets in the profile. This is used for progress reporting and UI display.
 func CountPackages(profile *NexusProfile) int {
-        total := 0
-        for _, t := range profile.Targets {
-                total += len(t.Packages)
-        }
-        return total
+	total := 0
+	for _, t := range profile.Targets {
+		total += len(t.Packages)
+	}
+	return total
 }
 
 // Families returns the list of unique package family names referenced by the
 // profile's targets. The order of families corresponds to their first
 // appearance in the Targets slice.
 func Families(profile *NexusProfile) []string {
-        seen := make(map[string]bool)
-        var families []string
-        for _, t := range profile.Targets {
-                if !seen[t.Family] {
-                        seen[t.Family] = true
-                        families = append(families, t.Family)
-                }
-        }
-        return families
+	seen := make(map[string]bool)
+	var families []string
+	for _, t := range profile.Targets {
+		if !seen[t.Family] {
+			seen[t.Family] = true
+			families = append(families, t.Family)
+		}
+	}
+	return families
 }
 
 // NOTE: ApplyManifest was REMOVED in V3.

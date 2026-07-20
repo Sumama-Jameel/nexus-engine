@@ -15,24 +15,53 @@
 package engine
 
 import (
-        "bytes"
-        "context"
-        "fmt"
-        "os/exec"
-        "runtime"
-        "strings"
-        "time"
+	"bytes"
+	"context"
+	"fmt"
+	"os/exec"
+	"runtime"
+	"strings"
+	"time"
 )
 
 // Security constants — per the Nexus Protocol Zero-Trust Architecture.
 const (
-        // CommandTimeoutSec is the maximum number of seconds any system call may run
-        // before being forcibly terminated via context cancellation. Per the Nexus
-        // Protocol design: "If a package install hangs, the engine kills it after 60
-        // seconds, preventing bricking." This timeout defends against denial-of-service
-        // via hung or unresponsive subprocesses.
-        CommandTimeoutSec = 60
+	// CommandTimeoutSec is the maximum number of seconds any system call may run
+	// before being forcibly terminated via context cancellation. Per the Nexus
+	// Protocol design: "If a package install hangs, the engine kills it after 60
+	// seconds, preventing bricking." This timeout defends against denial-of-service
+	// via hung or unresponsive subprocesses.
+	CommandTimeoutSec = 60
+
+	// MaxOutputBytes is the maximum number of bytes allowed from a single
+	// command's stdout. Commands that exceed this limit are killed via context
+	// cancellation. This prevents denial-of-service from commands that produce
+	// unbounded output (e.g., cat /dev/zero, infinite loop logging).
+	MaxOutputBytes = 10 * 1024 * 1024 // 10 MB
 )
+
+// ErrOutputTooLarge is returned when a command's stdout exceeds MaxOutputBytes.
+var ErrOutputTooLarge = fmt.Errorf("command output exceeded %d byte limit", MaxOutputBytes)
+
+// limitedWriter wraps a bytes.Buffer and returns an error when the
+// total bytes written exceeds MaxOutputBytes. Used by SanitizeAndExecute
+// to bound command output and prevent OOM from unbounded output.
+type limitedWriter struct {
+	buf   bytes.Buffer
+	count int64
+}
+
+func (w *limitedWriter) Write(p []byte) (int, error) {
+	w.count += int64(len(p))
+	if w.count > MaxOutputBytes {
+		return 0, ErrOutputTooLarge
+	}
+	return w.buf.Write(p)
+}
+
+func (w *limitedWriter) String() string {
+	return w.buf.String()
+}
 
 // AllowedCommands is the immutable whitelist of base commands that the engine is
 // permitted to execute. Any command not present in this map is rejected by
@@ -41,63 +70,56 @@ const (
 // Threat model:
 //   - An attacker who can control the command parameter (e.g., via a malicious
 //     profile or crafted input) can only invoke commands in this set.
-//   - The whitelist deliberately excludes shell interpreters (sh, bash -c) and
-//     dangerous utilities (rm, chmod, chown, dd, mkfs) that could cause
-//     irreversible system damage.
+//   - The whitelist deliberately excludes shell interpreters (sh, bash -c),
+//     dangerous utilities (rm, chmod, chown, dd, mkfs, sudo), download tools
+//     (curl, wget), and interactive tools (vim, htop, tmux, zsh) that could
+//     cause irreversible system damage or data exfiltration.
 //   - Commands are executed directly via exec.CommandContext, never through an
 //     intermediate shell, so even whitelisted commands cannot be chained with
 //     shell operators.
 //
 // No raw string concatenation for commands. Ever.
 var AllowedCommands = map[string]bool{
-        "uname":     true,
-        "hostname":  true,
-        "free":      true,
-        "lspci":     true,
-        "uptime":    true,
-        "sudo":      true,
-        "apt-get":   true,
-        "apt-cache": true,
-        "dpkg":      true,
-        "pacman":    true,
-        "dnf":       true,
-        "rpm":       true,
-        "yum":       true,
-        "apk":       true,
-        "chezmoi":   true,
-        "git":       true,
-        "age":       true,
-        "age-keygen": true,
-        "wsl":       true,
-        "docker":    true,
-        "podman":    true,
-        "distrobox": true,
-        "which":     true,
-        "cat":       true,
-        "ls":        true,
-        	"systemctl": true,
-        	"cpupower":  true,
-        	"node":      true,
-        "npm":       true,
-        "python3":   true,
-        "python":    true,
-        "java":      true,
-        "vim":       true,
-        "curl":      true,
-        "wget":      true,
-        "zsh":       true,
-        "htop":      true,
-        "tmux":      true,
-        	// V4: Windows-specific commands for cross-platform support
-        	"powershell":  true,
-        	"dism":        true,
-        	"where":       true,
-        	"cmd":         true,
-        	"systeminfo":  true,
-        	// V11: mode switcher — service control + power plan
-        	"sc":       true,
-        	"powercfg": true,
-        }
+	// Probe utilities
+	"uname":    true,
+	"hostname": true,
+	"free":     true,
+	"lspci":    true,
+	"uptime":   true,
+	// Package managers
+	"apt-get":   true,
+	"apt-cache": true,
+	"dpkg":      true,
+	"pacman":    true,
+	"dnf":       true,
+	"rpm":       true,
+	"yum":       true,
+	"apk":       true,
+	// Dotfiles and vault
+	"chezmoi":    true,
+	"git":        true,
+	"age":        true,
+	"age-keygen": true,
+	// Containers and WSL
+	"wsl":       true,
+	"docker":    true,
+	"podman":    true,
+	"distrobox": true,
+	// Utility
+	"which": true,
+	"ls":    true,
+	// V11: mode switcher — service control + power plan
+	"systemctl": true,
+	"cpupower":  true,
+	"sc":        true,
+	"powercfg":  true,
+	// V4: Windows-specific commands
+	"powershell": true,
+	"dism":       true,
+	"where":      true,
+	"cmd":        true,
+	"systeminfo": true,
+}
 
 // SanitizeAndExecute is the centralized security gate for all system calls
 // performed by the Nexus engine. It is the single point through which every
@@ -130,38 +152,43 @@ var AllowedCommands = map[string]bool{
 // whether the failure was a whitelist rejection, metacharacter detection,
 // timeout, or execution error.
 func SanitizeAndExecute(ctx context.Context, command string, args ...string) (string, error) {
-        // Step 1: Validate the base command against the whitelist
-        if !AllowedCommands[command] {
-                return "", fmt.Errorf("SECURITY: command '%s' is not in the allowed list", command)
-        }
+	// Step 1: Validate the base command against the whitelist
+	if !AllowedCommands[command] {
+		return "", fmt.Errorf("SECURITY: command '%s' is not in the allowed list", command)
+	}
 
-        // Step 2: Sanitize all arguments — reject shell metacharacters
-        for _, arg := range args {
-                if containsShellMetacharacters(arg) {
-                        return "", fmt.Errorf("SECURITY: argument '%s' contains shell metacharacters", arg)
-                }
-        }
+	// Step 2: Sanitize all arguments — reject shell metacharacters
+	for _, arg := range args {
+		if containsShellMetacharacters(arg) {
+			return "", fmt.Errorf("SECURITY: argument '%s' contains shell metacharacters", arg)
+		}
+	}
 
-        // Step 3: Create a context with timeout
-        ctx, cancel := context.WithTimeout(ctx, time.Duration(CommandTimeoutSec)*time.Second)
-        defer cancel()
+	// Step 3: Create a context with timeout
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(CommandTimeoutSec)*time.Second)
+	defer cancel()
 
-        // Step 4: Execute the command directly (never through a shell)
-        cmd := exec.CommandContext(ctx, command, args...)
+	// Step 4: Execute the command directly (never through a shell)
+	cmd := exec.CommandContext(ctx, command, args...)
 
-        var stdout, stderr bytes.Buffer
-        cmd.Stdout = &stdout
-        cmd.Stderr = &stderr
+	var stdout limitedWriter
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
-        err := cmd.Run()
-        if err != nil {
-                if ctx.Err() == context.DeadlineExceeded {
-                        return "", fmt.Errorf("TIMEOUT: command '%s' exceeded %d second limit", command, CommandTimeoutSec)
-                }
-                return "", fmt.Errorf("EXEC: command '%s' failed: %w (stderr: %s)", command, err, stderr.String())
-        }
+	err := cmd.Run()
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("TIMEOUT: command '%s' exceeded %d second limit", command, CommandTimeoutSec)
+		}
+		// Check if output limit was exceeded
+		if stdout.count > MaxOutputBytes {
+			return "", fmt.Errorf("OUTPUT_LIMIT: command '%s' output exceeded %d byte limit", command, MaxOutputBytes)
+		}
+		return "", fmt.Errorf("EXEC: command '%s' failed: %w (stderr: %s)", command, err, stderr.String())
+	}
 
-        return stdout.String(), nil
+	return stdout.String(), nil
 }
 
 // containsShellMetacharacters reports whether the string s contains characters
@@ -173,13 +200,13 @@ func SanitizeAndExecute(ctx context.Context, command string, args ...string) (st
 // provides defense-in-depth against scenarios where output might be
 // re-interpreted by a downstream consumer.
 func containsShellMetacharacters(s string) bool {
-        dangerous := []string{";", "|", "&", "$", "`", "(", ")", "{", "}", "<", ">", "\n", "\r", "'", "\"", "\\", "!"}
-        for _, char := range dangerous {
-                if strings.Contains(s, char) {
-                        return true
-                }
-        }
-        return false
+	dangerous := []string{";", "|", "&", "$", "`", "(", ")", "{", "}", "<", ">", "\n", "\r", "'", "\"", "\\", "!"}
+	for _, char := range dangerous {
+		if strings.Contains(s, char) {
+			return true
+		}
+	}
+	return false
 }
 
 // ValidatePrerequisites checks that required tools are available on the system.
@@ -190,21 +217,21 @@ func containsShellMetacharacters(s string) bool {
 // MUST go through SanitizeAndExecute — both `which` and `where` are
 // in the AllowedCommands whitelist.
 func ValidatePrerequisites(ctx context.Context) map[string]bool {
-        prerequisites := []string{"git", "curl"}
-        results := make(map[string]bool)
+	prerequisites := []string{"git"}
+	results := make(map[string]bool)
 
-        // Select the platform-appropriate binary lookup command.
-        // On Windows, `which` does not exist — `where` is the equivalent.
-        // On Linux/macOS, `which` is the standard tool locator.
-        lookupCmd := "which"
-        if runtime.GOOS == "windows" {
-                lookupCmd = "where"
-        }
+	// Select the platform-appropriate binary lookup command.
+	// On Windows, `which` does not exist — `where` is the equivalent.
+	// On Linux/macOS, `which` is the standard tool locator.
+	lookupCmd := "which"
+	if runtime.GOOS == "windows" {
+		lookupCmd = "where"
+	}
 
-        for _, tool := range prerequisites {
-                _, err := SanitizeAndExecute(ctx, lookupCmd, tool)
-                results[tool] = err == nil
-        }
+	for _, tool := range prerequisites {
+		_, err := SanitizeAndExecute(ctx, lookupCmd, tool)
+		results[tool] = err == nil
+	}
 
-        return results
+	return results
 }

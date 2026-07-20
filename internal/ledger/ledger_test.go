@@ -42,16 +42,16 @@ func newTestState(t *testing.T) *engine.StateTracker {
 // fakeInfo returns a deterministic SystemInfo for tests.
 func fakeInfo() *engine.SystemInfo {
 	return &engine.SystemInfo{
-		OS:         "linux",
-		Arch:       "amd64",
-		Kernel:     "6.8.0-arch1-1",
-		Hostname:   "test-machine",
-		CPUModel:   "Intel(R) Core(TM) i7-10750H",
-		CPUCores:   12,
-		RAMTotalMB: 16384,
+		OS:          "linux",
+		Arch:        "amd64",
+		Kernel:      "6.8.0-arch1-1",
+		Hostname:    "test-machine",
+		CPUModel:    "Intel(R) Core(TM) i7-10750H",
+		CPUCores:    12,
+		RAMTotalMB:  16384,
 		DiskTotalGB: 512.0,
-		GPU:        "NVIDIA GeForce RTX 3070",
-		IsWSL2:     false,
+		GPU:         "NVIDIA GeForce RTX 3070",
+		IsWSL2:      false,
 	}
 }
 
@@ -103,16 +103,16 @@ func TestGenerateFingerprint_ExcludesPII(t *testing.T) {
 
 func TestGenerateFingerprint_AllFields(t *testing.T) {
 	info := &engine.SystemInfo{
-		OS:         "darwin",
-		Arch:       "arm64",
-		Kernel:     "23.0.0",
-		Hostname:   "any",
-		CPUModel:   "Apple M3 Pro",
-		CPUCores:   11,
-		RAMTotalMB: 36864,
+		OS:          "darwin",
+		Arch:        "arm64",
+		Kernel:      "23.0.0",
+		Hostname:    "any",
+		CPUModel:    "Apple M3 Pro",
+		CPUCores:    11,
+		RAMTotalMB:  36864,
 		DiskTotalGB: 1024.0,
-		GPU:        "Apple M3 Pro (19-core)",
-		IsWSL2:     false,
+		GPU:         "Apple M3 Pro (19-core)",
+		IsWSL2:      false,
 	}
 	fp := GenerateFingerprint(info)
 	if len(fp) != 32 {
@@ -150,7 +150,7 @@ func TestRecord_WithFullData(t *testing.T) {
 		Total:     10,
 		Succeeded: 10,
 		Failed:    0,
-		Aborted: false,
+		Aborted:   false,
 	}
 
 	err := Record(ctx, state, info, orchResult, "base-dev", "apt", nil)
@@ -728,10 +728,10 @@ func TestRecord_AbortedInstall(t *testing.T) {
 	info := fakeInfo()
 
 	orchResult := &installer.OrchestratorResult{
-		Total:   5,
+		Total:     5,
 		Succeeded: 2,
-		Failed:  0,
-		Aborted: true,
+		Failed:    0,
+		Aborted:   true,
 	}
 
 	err := Record(ctx, state, info, orchResult, "test", "apt", nil)

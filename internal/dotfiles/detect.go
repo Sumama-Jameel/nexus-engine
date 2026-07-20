@@ -77,10 +77,11 @@ func Detect(ctx context.Context, execFn ExecFunc) (*DetectReport, error) {
 // parseChezmoiVersion extracts the semver X.Y.Z from `chezmoi --version` output.
 //
 // Real-world output examples (verified against chezmoi 2.x):
-//   "chezmoi version 2.50.0\n"                                            (older builds)
-//   "chezmoi version v2.50.0, commit abc123, built ..." (newer builds with 'v' prefix)
-//   "chezmoi version 2.50.0\ncommit: abc123\nbuilt: 2024-01-01\n"
-//   "chezmoi version 2.50.0-1-gabc123-dirty\n"  (dev builds)
+//
+//	"chezmoi version 2.50.0\n"                                            (older builds)
+//	"chezmoi version v2.50.0, commit abc123, built ..." (newer builds with 'v' prefix)
+//	"chezmoi version 2.50.0\ncommit: abc123\nbuilt: 2024-01-01\n"
+//	"chezmoi version 2.50.0-1-gabc123-dirty\n"  (dev builds)
 //
 // We return the FIRST token that looks like a clean semver after stripping
 // any leading 'v', any pre-release/build suffix (anything after '-' or '+'),
