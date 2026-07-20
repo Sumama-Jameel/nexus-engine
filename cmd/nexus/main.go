@@ -42,7 +42,7 @@ var (
 	vaultForce            bool
 	yesMode               bool
 	allowUnlistedServices bool
-	nexusVersion = "0.17.0"
+	nexusVersion = "0.16.0"
 )
 
 func main() {

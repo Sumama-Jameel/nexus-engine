@@ -2,7 +2,7 @@
 # V10: "The Tauri HUD (The Dashboard)"
 # CGO_ENABLED=0 is MANDATORY for static binary with zero C dependencies.
 
-VERSION ?= 0.17.0
+VERSION ?= 0.16.0
 BINARY   = nexus
 LDFLAGS  = -ldflags "-s -w -X main.nexusVersion=$(VERSION)"
 
