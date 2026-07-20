@@ -9,8 +9,27 @@ permissions:
   contents: write
 
 jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build:
     name: Build nexus-${{ matrix.goos }}-${{ matrix.goarch }}
+    needs: create-release
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -50,5 +69,6 @@ jobs:
           tag_name: ${{ github.ref_name }}
           files: nexus-${{ matrix.goos }}-${{ matrix.goarch }}*
           fail_on_unmatched_files: false
+          overwrite_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
