@@ -16,11 +16,12 @@ package mode
 
 import (
 	"context"
-	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 )
 
 // fakeExec is a programmable ExecFunc for mode tests. It returns canned

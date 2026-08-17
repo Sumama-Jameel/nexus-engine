@@ -195,6 +195,9 @@ func runProfileValidate(cmd *cobra.Command, args []string) error {
 }
 
 func runProfileCreate(cmd *cobra.Command, args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("profile name is required")
+	}
 	name := args[0]
 	if err := manifest.SanitizeProfileName(name); err != nil {
 		return err

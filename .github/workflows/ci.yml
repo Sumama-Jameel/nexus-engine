@@ -1,0 +1,120 @@
+# Nexus Protocol — CI Pipeline
+# Runs on every push to main and every pull request against main.
+# Enforces license headers, tests (with coverage ratchet), lint, and cross-compilation.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  license-headers:
+    name: License Headers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check Apache 2.0 license headers
+        run: |
+          ./scripts/check-license-headers.sh
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.23"
+          cache: true
+
+      - name: Run tests with race detector
+        run: go test -race -count=1 ./...
+
+      - name: Run tests with coverage
+        run: go test -coverprofile=coverage.out ./...
+
+      # Enforces total coverage and per-package thresholds defined in
+      # scripts/coverage-ratchet.sh. The .coverage-threshold file
+      # ratchets upward when coverage improves.
+      - name: Enforce coverage ratchet
+        run: ./scripts/coverage-ratchet.sh --check
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage.out
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.23"
+          cache: true
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v1.64.8
+          args: --timeout=5m
+
+  build:
+    name: Build (Go)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            make_target: build-linux
+          - goos: linux
+            goarch: arm64
+            make_target: build-linux-arm64
+          - goos: windows
+            goarch: amd64
+            make_target: build-windows
+          - goos: windows
+            goarch: arm64
+            make_target: build-windows-arm64
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.23"
+          cache: true
+
+      - name: Build Go binary
+        run: make ${{ matrix.make_target }}
+
+      - name: Verify binary exists
+        run: |
+          BINARY=nexus-${{ matrix.goos }}-${{ matrix.goarch }}
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY="${BINARY}.exe"
+          fi
+          test -f "${BINARY}" && echo "Build successful: ${BINARY}"
+          if [ "${{ matrix.goos }}" = "linux" ]; then
+            ./${BINARY} version
+          fi
+
+      - name: Upload Go binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: nexus-${{ matrix.goos }}-${{ matrix.goarch }}*
+          if-no-files-found: error

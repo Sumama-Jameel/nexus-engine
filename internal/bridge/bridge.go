@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"sync"
 
 	"github.com/Sumama-Jameel/nexus-engine/internal/engine"
 )
@@ -41,7 +40,6 @@ type ExecFunc func(ctx context.Context, command string, args ...string) (string,
 // to route through SanitizeAndExecute for Zero-Trust compliance.
 var (
 	bridgeExecFn ExecFunc
-	bridgeExecMu sync.Once
 )
 
 func init() {

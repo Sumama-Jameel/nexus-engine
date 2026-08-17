@@ -37,10 +37,3 @@ func keyringSet(service, value string) error {
 func keyringGet(service string) (string, error) {
 	return keyring.Get(service, keyringUser)
 }
-
-// keyringDelete removes the entry under (service, keyringUser). Used
-// during vault re-init to avoid stale entries lingering after the key
-// has been rotated.
-func keyringDelete(service string) error {
-	return keyring.Delete(service, keyringUser)
-}

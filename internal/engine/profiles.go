@@ -278,10 +278,6 @@ func FormatProfileSuggestions(suggestions []ProfileSuggestion) string {
 		if len(desc) > 50 {
 			desc = desc[:47] + "..."
 		}
-		compat := s.Compatibility.Message
-		if len(compat) > 40 {
-			compat = compat[:37] + "..."
-		}
 		fmt.Fprintf(&b, "  %-24s %-8s %s\n", s.Name, scoreStr, desc)
 	}
 	fmt.Fprintf(&b, "\n")

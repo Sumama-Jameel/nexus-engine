@@ -81,12 +81,7 @@ func ApplyFromProfile(ctx context.Context, profile *manifest.NexusProfile, deps 
 
 	// Step 1: Bind the source if specified.
 	if dot.Source != "" {
-		sourceDeps := SourceDeps{
-			ExecFn: deps.ExecFn,
-			State:  deps.State,
-			Audit:  deps.Audit,
-		}
-		if err := BindSource(ctx, dot.Source, sourceDeps); err != nil {
+		if err := BindSource(ctx, dot.Source, SourceDeps(deps)); err != nil {
 			report.Warnings = append(report.Warnings, fmt.Sprintf("bind source %q: %v", dot.Source, err))
 			// Don't proceed to apply/add if bind failed.
 			return report
@@ -133,11 +128,7 @@ func ApplyFromProfile(ctx context.Context, profile *manifest.NexusProfile, deps 
 	}
 
 	// Step 3: Track each managed path. Sensitive paths are SKIPPED, not failed.
-	addDeps := AddDeps{
-		ExecFn: deps.ExecFn,
-		State:  deps.State,
-		Audit:  deps.Audit,
-	}
+	addDeps := AddDeps(deps)
 	for _, p := range dot.ManagedPaths {
 		// We do a quick sensitivity pre-check here so we can collect skipped
 		// paths into a distinct list. The full validateManagedPath would also

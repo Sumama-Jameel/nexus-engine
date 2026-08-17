@@ -1181,35 +1181,27 @@ func TestRunWSLRemove_JSON(t *testing.T) {
 // These tests use goroutines with timeouts to prevent hanging when
 // sudo is not available, and recover() for expected panics.
 
-// runProfileCreate accesses args[0] without bounds checking. With
-// cobra.ExactArgs(1), empty args shouldn't happen in production, but
-// the function should be defensive. We recover from the expected panic.
+// runProfileCreate should return an error when args is empty instead of
+// panicking. cobra.ExactArgs(1) guards production calls, but the handler
+// is defensive on its own.
 func TestRunProfileCreate_NoArgs(t *testing.T) {
 	resetGlobals(t)
 	withTempHome(t)
 	outputJSON = false
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				// Expected: index out of range when args is empty
-			}
-		}()
-		_ = runProfileCreate(newRootCmd(), []string{})
-	}()
+	err := runProfileCreate(newRootCmd(), []string{})
+	if err == nil {
+		t.Fatal("expected an error for empty args")
+	}
 }
 
 func TestRunProfileCreate_JSON_NoArgs(t *testing.T) {
 	resetGlobals(t)
 	withTempHome(t)
 	outputJSON = true
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				// Expected: index out of range when args is empty
-			}
-		}()
-		_ = runProfileCreate(newRootCmd(), []string{})
-	}()
+	err := runProfileCreate(newRootCmd(), []string{})
+	if err == nil {
+		t.Fatal("expected an error for empty args")
+	}
 }
 
 // runInstall calls the orchestrator which does preflight (sudo check).

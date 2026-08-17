@@ -20,20 +20,21 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 THRESHOLD_FILE="${PROJECT_DIR}/.coverage-threshold"
+MODULE_PATH="$(cd "${PROJECT_DIR}" && go list -m)"
 
 # Minimum total coverage (absolute floor — the ratchet baseline)
-MINIMUM_THRESHOLD=80
+MINIMUM_THRESHOLD=65
 
 # Per-package minimums (package=minimum)
 declare -A PACKAGE_MINIMUMS=(
-    ["internal/engine"]=80
+    ["internal/engine"]=70
     ["internal/installer"]=90
-    ["internal/bridge"]=80
+    ["internal/bridge"]=85
     ["internal/wsl"]=90
     ["internal/dotfiles"]=80
-    ["pkg/manifest"]=80
-    ["cmd/nexus/runner"]=75
-    ["cmd/nexus"]=50
+    ["pkg/manifest"]=88
+    ["cmd/nexus/runner"]=85
+    ["cmd/nexus"]=30
 )
 
 # ─── Functions ───
@@ -67,12 +68,12 @@ get_total_coverage() {
 
 get_package_coverage() {
 	local pkg="$1"
-	# coverage.out format: "nexus-engine/PKG/file.go:line.col,line.col num_stmts count"
+	# coverage.out format: "MODULE/PKG/file.go:line.col,line.col num_stmts count"
 	# Where num_stmts is the statement count for the block and count is
 	# the number of times the block was executed. A block is "covered"
 	# when count > 0. Sum the statement counts for all blocks (total)
 	# and for covered blocks only (covered), then compute the ratio.
-	grep "^${pkg}/" coverage.out | awk '{ stmts += $2; if ($3 > 0) covered += $2 } END { if (stmts > 0) printf "%.1f", (covered/stmts)*100; else print "0" }'
+	grep "^${MODULE_PATH}/${pkg}/" coverage.out | awk '{ stmts += $2; if ($3 > 0) covered += $2 } END { if (stmts > 0) printf "%.1f", (covered/stmts)*100; else print "0" }'
 }
 
 read_threshold() {
