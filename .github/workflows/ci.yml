@@ -66,7 +66,7 @@ jobs:
           cache: true
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
+        uses: golangci/golangci-lint-action@v6
         with:
           version: v1.64.8
           args: --timeout=5m
@@ -108,7 +108,7 @@ jobs:
             BINARY="${BINARY}.exe"
           fi
           test -f "${BINARY}" && echo "Build successful: ${BINARY}"
-          if [ "${{ matrix.goos }}" = "linux" ]; then
+          if [ "${{ matrix.goos }}" = "linux" ] && [ "${{ matrix.goarch }}" = "amd64" ]; then
             ./${BINARY} version
           fi
 

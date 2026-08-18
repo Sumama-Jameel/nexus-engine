@@ -608,6 +608,7 @@ func TestLoadUnlockKey_FileNotReadable(t *testing.T) {
 func TestPatchChezmoiAgeConfig_NoConfigFile(t *testing.T) {
 	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
+	t.Setenv("XDG_CONFIG_HOME", "")
 
 	// No chezmoi config exists — should return an error (file doesn't exist)
 	err := patchChezmoiAgeConfig("/some/key/path")
@@ -619,6 +620,7 @@ func TestPatchChezmoiAgeConfig_NoConfigFile(t *testing.T) {
 func TestPatchChezmoiAgeConfig_NoAgeSection_AppendsNew(t *testing.T) {
 	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
+	t.Setenv("XDG_CONFIG_HOME", "")
 
 	cfgDir := filepath.Join(tmpHome, ".config", "chezmoi")
 	os.MkdirAll(cfgDir, 0755)
@@ -643,6 +645,7 @@ func TestPatchChezmoiAgeConfig_NoAgeSection_AppendsNew(t *testing.T) {
 func TestPatchChezmoiAgeConfig_ExistingAgeSection_ReplacesIdentity(t *testing.T) {
 	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
+	t.Setenv("XDG_CONFIG_HOME", "")
 
 	cfgDir := filepath.Join(tmpHome, ".config", "chezmoi")
 	os.MkdirAll(cfgDir, 0755)
@@ -667,6 +670,7 @@ func TestPatchChezmoiAgeConfig_ExistingAgeSection_ReplacesIdentity(t *testing.T)
 func TestPatchChezmoiAgeConfig_ExistingAgeSectionNoIdentity_AppendsIdentity(t *testing.T) {
 	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
+	t.Setenv("XDG_CONFIG_HOME", "")
 
 	cfgDir := filepath.Join(tmpHome, ".config", "chezmoi")
 	os.MkdirAll(cfgDir, 0755)
@@ -691,6 +695,7 @@ func TestPatchChezmoiAgeConfig_ExistingAgeSectionNoIdentity_AppendsIdentity(t *t
 func TestPatchChezmoiAgeConfig_Idempotent(t *testing.T) {
 	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
+	t.Setenv("XDG_CONFIG_HOME", "")
 
 	cfgDir := filepath.Join(tmpHome, ".config", "chezmoi")
 	os.MkdirAll(cfgDir, 0755)
