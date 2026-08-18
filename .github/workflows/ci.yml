@@ -42,17 +42,17 @@ jobs:
       - name: Run tests with coverage
         run: go test -coverprofile=coverage.out ./...
 
-      # Enforces total coverage and per-package thresholds defined in
-      # scripts/coverage-ratchet.sh. The .coverage-threshold file
-      # ratchets upward when coverage improves.
-      - name: Enforce coverage ratchet
-        run: ./scripts/coverage-ratchet.sh --check
-
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage.out
+
+      # Enforces total coverage and per-package thresholds defined in
+      # scripts/coverage-ratchet.sh. The .coverage-threshold file
+      # ratchets upward when coverage improves.
+      - name: Enforce coverage ratchet
+        run: ./scripts/coverage-ratchet.sh --check
 
   lint:
     name: Lint
@@ -65,11 +65,18 @@ jobs:
           go-version: "1.23"
           cache: true
 
+      - name: Install golangci-lint v1.64.8
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/v1.64.8/install.sh \
+            | sh -s -- -b "$(go env GOPATH)/bin" v1.64.8
+
+      # golangci-lint v1 is pinned because the repo's .golangci.yml uses
+      # the v1 schema. golangci-lint-action >= v7 refuses v1 binaries, so
+      # we install the pinned binary directly instead of using the action.
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: v1.64.8
-          args: --timeout=5m
+        run: |
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          golangci-lint run --timeout=5m
 
   build:
     name: Build (Go)
